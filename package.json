@@ -1,0 +1,24 @@
+{
+  "name": "shogi-imperios-dois",
+  "version": "1.0.0",
+  "description": "SHOGI: Guerra dos Dois Impérios - Jogo Estratégico",
+  "main": "index.html",
+  "scripts": {
+    "build-apk": "cordova build android",
+    "build-ios": "cordova build ios",
+    "run-android": "cordova run android",
+    "prepare": "cordova prepare"
+  },
+  "dependencies": {
+    "cordova-android": "^12.0.0",
+    "cordova-plugin-statusbar": "^2.4.3",
+    "cordova-plugin-whitelist": "^1.3.4"
+  },
+  "cordova": {
+    "platforms": ["android", "ios"],
+    "plugins": {
+      "cordova-plugin-whitelist": {},
+      "cordova-plugin-statusbar": {}
+    }
+  }
+}

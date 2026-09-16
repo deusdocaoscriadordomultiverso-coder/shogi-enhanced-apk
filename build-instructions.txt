@@ -1,0 +1,38 @@
+=== INSTRUÇÕES PARA COMPILAR APK ===
+
+1. INSTALAÇÃO INICIAL:
+   npm install -g cordova
+   npm install
+
+2. ADICIONAR PLATAFORMA ANDROID:
+   cordova platform add android
+
+3. BUILD APK (Debug):
+   cordova build android
+   
+   APK gerado em: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+
+4. BUILD APK (Release - Requer assinatura):
+   cordova build android --release
+   
+   Depois assinar:
+   jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore \
+   platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk \
+   alias_name
+
+5. INSTALAR NO DEVICE:
+   adb install -r platforms/android/app/build/outputs/apk/debug/app-debug.apk
+
+6. EXECUTAR PROJETO:
+   cordova run android
+
+=== PARA iOS (Mac Only) ===
+
+   cordova platform add ios
+   cordova build ios
+   cordova run ios
+
+=== TESTAR NO NAVEGADOR ===
+
+   Abra index.html diretamente em qualquer navegador
+   ou sirva com: python -m http.server 8000
