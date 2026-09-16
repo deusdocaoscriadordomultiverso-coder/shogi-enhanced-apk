@@ -5,1289 +5,803 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>SHOGI: Guerra dos Dois Impérios</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
     :root {
-      --bg-dark: #0a0e14;
+      --bg-dark: #090c10;
       --bg-card: #131922;
+      --bg-card-border: #2a3649;
       --solar-gold: #f59e0b;
-      --solar-crimson: #dc2626;
+      --solar-glow: #fbbf24;
+      --solar-crimson: #b91c1c;
+      --solar-bg: #2a1f11;
       --shadow-violet: #8b5cf6;
+      --shadow-teal: #06b6d4;
+      --shadow-dark: #1e112a;
+      --board-wood: #2c2219;
+      --board-tile-light: #3d3125;
+      --board-tile-dark: #32271c;
+      --board-border: #5a452f;
+      --zone-sente: rgba(245, 158, 11, 0.08);
+      --zone-gote: rgba(139, 92, 246, 0.08);
       --text-main: #f1f5f9;
       --text-muted: #94a3b8;
-      --board-wood: #2c2219;
-      --board-light: #3d3125;
-      --board-dark: #32271c;
       --accent-green: #10b981;
       --accent-red: #ef4444;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background: var(--bg-dark);
+    body {
+      background-color: var(--bg-dark);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      overflow: hidden;
+      font-family: var(--font-family);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
       touch-action: manipulation;
     }
-
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 20%, #1f2735 0%, #090c10 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
     #app {
       display: flex;
       flex-direction: column;
       width: 100%;
-      height: 100vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 4px;
-      gap: 4px;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 8px;
-      background: rgba(0,0,0,0.3);
-      border-radius: 6px;
-    }
-
-    .brand h1 {
-      font-size: 1rem;
-      font-weight: 900;
-      background: linear-gradient(90deg, #fbbf24, #f87171);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand span {
-      font-size: 0.6rem;
-      color: var(--text-muted);
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 4px;
-    }
-
-    .icon-btn {
-      background: #1e293b;
-      border: 1px solid #334155;
-      color: #e2e8f0;
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.1s;
-    }
-
-    .icon-btn:active {
-      transform: scale(0.92);
-    }
-
-    .icon-btn svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #111827;
-      border: 1px solid #1f2937;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 0.75rem;
-    }
-
-    .army-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-weight: 800;
-    }
-
-    .army-badge.solar {
-      background: rgba(245,158,11,0.2);
-      color: #fcd34d;
-    }
-
-    .army-badge.shadow {
-      background: rgba(139,92,246,0.2);
-      color: #c4b5fd;
-    }
-
-    .game-message {
-      color: #94a3b8;
-      font-weight: 600;
-    }
-
-    .game-message.alert {
-      color: #f87171;
-      animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
-    }
-
-    .garrison-container {
-      background: #111823;
-      border: 1px solid #1e293b;
-      border-radius: 6px;
-      padding: 4px 8px;
-    }
-
-    .garrison-header {
-      font-size: 0.65rem;
-      font-weight: 800;
-      color: #64748b;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .garrison-slots {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      min-height: 44px;
-    }
-
-    .reserve-piece-card {
-      position: relative;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      width: 42px;
-      height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.1s;
-    }
-
-    .reserve-piece-card:active {
-      transform: scale(0.95);
-    }
-
-    .reserve-piece-card.active {
-      border-color: #38bdf8;
-      box-shadow: 0 0 8px rgba(56,189,248,0.7);
-    }
-
-    .reserve-piece-card svg {
-      width: 28px;
-      height: 28px;
-    }
-
-    .count-pill {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      background: #e11d48;
-      color: white;
-      font-size: 0.55rem;
-      font-weight: 900;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .arena-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 300px;
-    }
-
-    .board-frame {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      max-width: 100%;
-      background: #1c140e;
-      border: 3px solid #4a3828;
-      border-radius: 8px;
-      display: grid;
-      grid-template-columns: repeat(9, 1fr);
-      grid-template-rows: repeat(9, 1fr);
-      gap: 1px;
-      padding: 2px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
-    }
-
-    .tile {
-      background: #2b2016;
-      border-radius: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.08s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .tile:nth-child(even) {
-      background: #261c14;
-    }
-
-    .tile.selected {
-      background: #0284c7 !important;
-      box-shadow: inset 0 0 8px #38bdf8;
-    }
-
-    .tile.valid-move::after {
-      content: "";
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background: #10b981;
-      border-radius: 50%;
-      box-shadow: 0 0 6px #10b981;
-    }
-
-    .tile.valid-capture {
-      background: #7f1d1d !important;
-    }
-
-    .tile.in-check {
-      background: #b91c1c !important;
-      animation: checkPulse 0.6s infinite;
-    }
-
-    @keyframes checkPulse {
-      0%, 100% { box-shadow: inset 0 0 8px #ef4444; }
-      50% { box-shadow: inset 0 0 16px #ff0000; }
-    }
-
-    .shogi-piece {
-      width: 90%;
-      height: 90%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
-      position: relative;
-    }
-
-    .shogi-piece.player-gote {
-      transform: rotate(180deg);
-    }
-
-    .shogi-piece.promoted {
-      filter: drop-shadow(0 0 6px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8));
-      animation: promoteGlow 2s infinite ease-in-out;
-    }
-
-    @keyframes promoteGlow {
-      0%, 100% { filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
-      50% { filter: drop-shadow(0 0 10px #fbbf24) drop-shadow(0 0 8px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
-    }
-
-    .shogi-piece svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .piece-tooltip {
-      position: absolute;
-      background: #1f2937;
-      border: 1px solid #f59e0b;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 0.65rem;
-      color: #fcd34d;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 50;
-      bottom: 105%;
-      left: 50%;
-      transform: translateX(-50%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.8);
-    }
-
-    .action-bar {
-      display: flex;
-      gap: 4px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 8px 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      border-radius: 6px;
-      border: 1px solid #334155;
-      background: #1e293b;
-      color: #e2e8f0;
-      cursor: pointer;
-      transition: all 0.1s;
-    }
-
-    .btn:active {
-      transform: scale(0.96);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #b45309, #d97706);
-      border-color: #f59e0b;
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #991b1b, #dc2626);
-      border-color: #ef4444;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 12px;
-    }
-
-    .modal-backdrop.show {
-      display: flex;
-    }
-
-    .modal-window {
-      background: #111827;
-      border: 2px solid #374151;
-      border-radius: 12px;
-      max-width: 400px;
-      width: 100%;
-      max-height: 80vh;
-      overflow-y: auto;
-      box-shadow: 0 16px 36px rgba(0,0,0,0.9);
-    }
-
-    .modal-header {
-      padding: 12px 16px;
-      background: #1f2937;
-      border-bottom: 1px solid #374151;
-      font-weight: 800;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .modal-body {
-      padding: 14px 16px;
-      font-size: 0.82rem;
-      color: #d1d5db;
-    }
-
-    .modal-footer {
-      padding: 10px 16px;
-      background: #182234;
-      border-top: 1px solid #2d3b55;
-      display: flex;
-      gap: 8px;
-    }
-
-    .promo-preview {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin: 12px 0;
-      flex-wrap: wrap;
-    }
-
-    .promo-card {
-      background: #1f2937;
-      border: 2px solid #4b5563;
-      border-radius: 8px;
-      padding: 12px;
-      width: 110px;
-      text-align: center;
-      font-size: 0.7rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-
-    .promo-card.promoted {
-      border-color: #f59e0b;
-      box-shadow: 0 0 15px rgba(245,158,11,0.6), inset 0 0 10px rgba(245,158,11,0.2);
-      background: linear-gradient(135deg, #2d2211, #1f2937);
-    }
-
-    .promo-card svg {
-      width: 50px;
-      height: 50px;
-      margin-bottom: 6px;
-    }
-
-    .promo-card .name {
-      font-weight: 800;
-      margin-bottom: 4px;
-      color: #fcd34d;
-    }
-
-    .promo-card .ability {
-      font-size: 0.6rem;
-      color: #cbd5e1;
-      line-height: 1.3;
-    }
-
-    .history-drawer {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      border-radius: 6px;
+      max-width: 580px;
+      margin: 0 auto;
       padding: 6px 8px;
-      max-height: 50px;
-      overflow-y: auto;
-      font-size: 0.65rem;
-      color: #94a3b8;
+      min-height: 100vh;
+      min-height: 100dvh;
     }
-
-    .history-entry {
-      padding: 2px 0;
-      border-bottom: 1px solid #1e293b;
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 6px; margin-bottom: 4px; border-bottom: 1px solid #1f2937;
     }
-
-    .history-entry.sente { color: #fcd34d; }
-    .history-entry.gote { color: #c4b5fd; }
+    .brand { display: flex; flex-direction: column; }
+    .brand h1 {
+      font-size: 1.05rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+      background: linear-gradient(90deg, #fbbf24, #f87171, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.1;
+    }
+    .brand span { font-size: 0.62rem; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+    .header-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      background: #1e293b; border: 1px solid #334155; color: #e2e8f0; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;
+    }
+    .icon-btn:active { transform: scale(0.92); background: #334155; }
+    .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between; background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 5px 10px; margin-bottom: 6px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .turn-indicator { display: flex; align-items: center; gap: 8px; }
+    .army-badge {
+      display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .army-badge.solar { background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(185,28,28,0.2)); color: #fcd34d; border: 1px solid rgba(245,158,11,0.5); }
+    .army-badge.shadow { background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(6,182,212,0.2)); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.5); }
+    .badge-icon { width: 10px; height: 10px; border-radius: 50%; }
+    .solar .badge-icon { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+    .shadow .badge-icon { background: #8b5cf6; box-shadow: 0 0 8px #8b5cf6; }
+    .game-message { font-size: 0.72rem; font-weight: 700; color: #94a3b8; }
+    .game-message.check-alert { color: #f87171; animation: pulseAlert 1s infinite alternate; }
+    @keyframes pulseAlert { 0% { opacity: 0.7; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1.02); } }
+    .garrison-container {
+      background: #111823; border: 1px solid #1e293b; border-radius: 8px; padding: 4px 8px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 2px; position: relative;
+    }
+    .garrison-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; color: #64748b; }
+    .garrison-header .faction-label { display: flex; align-items: center; gap: 4px; }
+    .garrison-header.solar-header { color: #f59e0b; }
+    .garrison-header.shadow-header { color: #a78bfa; }
+    .garrison-slots {
+      display: flex; flex-wrap: nowrap; gap: 4px; min-height: 44px; align-items: center; overflow-x: auto; scrollbar-width: none; padding: 2px 0;
+    }
+    .garrison-slots::-webkit-scrollbar { display: none; }
+    .reserve-piece-card {
+      position: relative; background: #1e293b; border: 1px solid #334155; border-radius: 6px; width: 42px; height: 42px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease;
+    }
+    .reserve-piece-card.active-drop { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.7); transform: translateY(-2px); background: #0c4a6e; }
+    .reserve-piece-card .count-pill { position: absolute; top: -3px; right: -3px; background: #e11d48; color: #fff; font-size: 0.6rem; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+    .reserve-piece-card svg { width: 28px; height: 28px; }
+    .arena-wrapper { position: relative; width: 100%; aspect-ratio: 1 / 1; max-width: 100%; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
+    .board-frame {
+      width: 100%; height: 100%; background: #1c140e; border: 3px solid #4a3828; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.8), inset 0 0 12px rgba(0,0,0,0.7); padding: 4px; display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); gap: 1.5px; position: relative; touch-action: none;
+    }
+    .tile {
+      position: relative; background: #2b2016; border-radius: 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s ease; overflow: hidden;
+    }
+    .tile:nth-child(even) { background: #261c14; }
+    .tile.zone-gote { background: #291f26; border-top: 1px solid rgba(139, 92, 246, 0.2); }
+    .tile.zone-sente { background: #2b2217; border-bottom: 1px solid rgba(245, 158, 11, 0.2); }
+    .tile[data-row="2"] { border-bottom: 1px dashed rgba(139, 92, 246, 0.4); }
+    .tile[data-row="6"] { border-top: 1px dashed rgba(245, 158, 11, 0.4); }
+    .tile.selected { background: #0284c7 !important; box-shadow: inset 0 0 8px #38bdf8; }
+    .tile.last-move-src { background: #4338ca !important; opacity: 0.85; }
+    .tile.last-move-dst { background: #4f46e5 !important; box-shadow: inset 0 0 6px #818cf8; }
+    .tile.valid-move::after {
+      content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: rgba(16, 185, 129, 0.8); box-shadow: 0 0 8px #10b981; pointer-events: none; animation: pulseDot 1.2s infinite ease-in-out;
+    }
+    .tile.valid-capture { background: #7f1d1d !important; }
+    .tile.valid-capture::after {
+      content: ""; position: absolute; width: 85%; height: 85%; border: 2px dashed #ef4444; border-radius: 4px; box-shadow: 0 0 8px rgba(239, 68, 68, 0.8); pointer-events: none; animation: pulseBox 1s infinite alternate;
+    }
+    .tile.valid-drop::after {
+      content: ""; position: absolute; width: 12px; height: 12px; border-radius: 3px; background: rgba(56, 189, 248, 0.85); box-shadow: 0 0 8px #38bdf8; pointer-events: none;
+    }
+    .tile.in-check { background: radial-gradient(circle, #b91c1c 40%, #450a0a 100%) !important; animation: checkPulse 0.8s infinite alternate ease-in-out; }
+    @keyframes pulseDot { 0%, 100% { transform: scale(0.8); opacity: 0.6; } 50% { transform: scale(1.15); opacity: 1; } }
+    @keyframes pulseBox { 0% { transform: scale(0.92); opacity: 0.7; } 100% { transform: scale(1.02); opacity: 1; } }
+    @keyframes checkPulse { 0% { box-shadow: inset 0 0 12px #ef4444; } 100% { box-shadow: inset 0 0 20px #ff0000, 0 0 10px #ef4444; } }
+    .shogi-piece {
+      width: 92%; height: 92%; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: transform 0.15s ease; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    }
+    .shogi-piece.player-gote { transform: rotate(180deg); }
+    .shogi-piece svg { width: 100%; height: 100%; pointer-events: none; }
+    .shogi-piece.promoted { filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
+    .shogi-piece.promoted.player-gote { filter: drop-shadow(0 0 4px #c084fc) drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
+    #effect-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+    .action-bar { display: flex; gap: 6px; margin-top: 6px; justify-content: space-between; }
+    .btn {
+      background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 8px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; flex: 1; transition: all 0.15s ease; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .btn:active { transform: scale(0.96); background: #334155; }
+    .btn.btn-primary { background: linear-gradient(135deg, #b45309, #d97706); border-color: #f59e0b; color: #fff; }
+    .btn.btn-danger { background: linear-gradient(135deg, #991b1b, #dc2626); border-color: #ef4444; color: #fff; }
+    .history-drawer {
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; margin-top: 6px; padding: 4px 8px; max-height: 48px; overflow-y: auto; font-family: monospace; font-size: 0.68rem; color: #94a3b8; display: flex; flex-direction: column-reverse;
+    }
+    .history-entry { padding: 1px 0; border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; }
+    .history-entry.sente-move { color: #fcd34d; }
+    .history-entry.gote-move { color: #c4b5fd; }
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .modal-backdrop.show { opacity: 1; pointer-events: auto; }
+    .modal-window {
+      background: #111827; border: 2px solid #374151; border-radius: 12px; width: 100%; max-width: 440px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9); overflow: hidden; transform: scale(0.95); transition: transform 0.2s ease;
+    }
+    .modal-backdrop.show .modal-window { transform: scale(1); }
+    .modal-header { padding: 12px 16px; background: #1f2937; border-bottom: 1px solid #374151; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { font-size: 1rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: #f3f4f6; }
+    .modal-close { background: none; border: none; color: #9ca3af; font-size: 1.2rem; cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+    .modal-body { padding: 14px 16px; overflow-y: auto; font-size: 0.82rem; line-height: 1.5; color: #d1d5db; }
+    .modal-footer { padding: 10px 16px; background: #182234; border-top: 1px solid #2d3b55; display: flex; gap: 8px; justify-content: flex-end; }
+    .promo-dialog { text-align: center; }
+    .promo-preview-box { display: flex; justify-content: center; align-items: center; gap: 20px; margin: 16px 0; }
+    .promo-unit-card {
+      background: #1f2937; border: 1px solid #4b5563; border-radius: 8px; padding: 10px; width: 100px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .promo-unit-card.promoted-card { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); background: #281d11; }
+    .promo-unit-card svg { width: 50px; height: 50px; }
+    .promo-unit-card span { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+    .victory-box { text-align: center; padding: 12px 6px; }
+    .victory-title { font-size: 1.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; }
+    .victory-title.solar-win { color: #fbbf24; text-shadow: 0 0 15px rgba(245, 158, 11, 0.8); }
+    .victory-title.shadow-win { color: #c084fc; text-shadow: 0 0 15px rgba(168, 85, 247, 0.8); }
+    .victory-reason { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px; }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1f2937; }
+    .setting-label { font-size: 0.82rem; font-weight: 600; }
+    .setting-desc { font-size: 0.68rem; color: #94a3b8; }
+    select, input[type="checkbox"] { cursor: pointer; }
+    select {
+      background: #1f2937; color: #f3f4f6; border: 1px solid #4b5563; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem;
+    }
+    .rules-section { margin-bottom: 12px; }
+    .rules-section h4 { color: #f59e0b; font-size: 0.85rem; margin-bottom: 4px; text-transform: uppercase; }
+    .unit-rule-card { background: #1f2937; padding: 8px; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+    .unit-rule-card svg { width: 38px; height: 38px; flex-shrink: 0; }
+    #diag-panel { display: none; position: fixed; bottom: 0; left: 0; right: 0; max-height: 140px; background: #18181b; color: #ef4444; font-family: monospace; font-size: 0.65rem; padding: 6px 10px; overflow-y: auto; border-top: 2px solid #dc2626; z-index: 9999; }
   </style>
 </head>
 <body>
   <div id="app">
     <header>
       <div class="brand">
-        <h1>⚔️ SHOGI ⚔️</h1>
-        <span>Guerra dos Dois Impérios</span>
+        <h1>Shogi: Guerra dos Dois Impérios</h1>
+        <span>Táticas Militares Tradicionais</span>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="btn-sound" title="Som">🔊</button>
-        <button class="icon-btn" id="btn-rules" title="Regras">ℹ️</button>
-        <button class="icon-btn" id="btn-settings" title="Configurações">⚙️</button>
+        <button id="btn-sound-toggle" class="icon-btn" title="Alternar som" aria-label="Som">
+          <svg id="sound-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          <svg id="sound-icon-off" style="display:none;" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+        </button>
+        <button id="btn-rules" class="icon-btn" title="Regras de combate" aria-label="Regras">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </button>
+        <button id="btn-settings" class="icon-btn" title="Configurações" aria-label="Configurações">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        </button>
       </div>
     </header>
 
     <div class="status-bar">
-      <div class="army-badge solar" id="army-badge">
-        <span>⭐ Império Solar</span>
+      <div class="turn-indicator">
+        <div id="army-badge" class="army-badge solar">
+          <span class="badge-icon"></span>
+          <span id="army-name">Império Solar</span>
+        </div>
       </div>
-      <div class="game-message" id="game-status">Turno 1</div>
+      <div id="game-status-text" class="game-message">Turno 1: Comande suas tropas</div>
     </div>
 
-    <div class="garrison-container">
-      <div class="garrison-header shadow-header">Arsenal do Vazio (Inimigo)</div>
+    <div class="garrison-container" id="garrison-gote">
+      <div class="garrison-header shadow-header">
+        <span class="faction-label">
+          <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 2L9 9l-7 3 7 3 3 7 3-7 7-3-7-3z"/></svg>
+          Arsenal do Vazio (inimigo)
+        </span>
+        <span id="gote-captured-count">0 capturas</span>
+      </div>
       <div class="garrison-slots" id="gote-slots"></div>
     </div>
 
     <div class="arena-wrapper">
       <div class="board-frame" id="shogi-board"></div>
+      <canvas id="effect-canvas"></canvas>
     </div>
 
-    <div class="garrison-container">
-      <div class="garrison-header">Arsenal da Alvorada (Seu Exército)</div>
+    <div class="garrison-container" id="garrison-sente" style="margin-top: 4px;">
+      <div class="garrison-header solar-header">
+        <span class="faction-label">
+          <svg style="width:12px;height:12px;fill:currentColor" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0-5l2 3h-4l2-3zm0 20l-2-3h4l-2 3zm10-10l-3 2v-4l3 2zm-20 0l3-2v4l-3-2z"/></svg>
+          Arsenal da Alvorada (seu exército)
+        </span>
+        <span id="sente-captured-count">0 capturas</span>
+      </div>
       <div class="garrison-slots" id="sente-slots"></div>
     </div>
 
     <div class="history-drawer" id="move-history">
-      Batalha iniciada...
+      <div class="history-entry">-- Campo de batalha pronto. Início das hostilidades --</div>
     </div>
 
     <div class="action-bar">
-      <button class="btn" id="btn-undo">↶ Desfazer</button>
-      <button class="btn btn-danger" id="btn-restart">🔄 Reiniciar</button>
+      <button id="btn-undo" class="btn" title="Desfazer último movimento">
+        <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        Desfazer
+      </button>
+      <button id="btn-restart" class="btn btn-danger" title="Reiniciar a guerra">
+        <svg style="width:14px;height:14px;fill:currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Reiniciar
+      </button>
     </div>
   </div>
 
-  <!-- MODAIS -->
-  <div class="modal-backdrop" id="promo-modal">
+  <div id="promo-modal" class="modal-backdrop">
     <div class="modal-window">
-      <div class="modal-header">⚡ Evolução de Batalha ⚡</div>
-      <div class="modal-body">
-        <p style="margin-bottom: 12px; text-align: center; font-weight: 600;">Sua unidade atingiu o território inimigo!</p>
-        <div class="promo-preview">
-          <div class="promo-card" id="promo-normal">
-            <div style="height: 50px; display: flex; align-items: center; justify-content: center;"></div>
-            <div class="name" id="promo-normal-name"></div>
-            <div class="ability" id="promo-normal-ability"></div>
+      <div class="modal-header">
+        <h3>Evolução de batalha (promoção)</h3>
+      </div>
+      <div class="modal-body promo-dialog">
+        <p>Sua unidade adentrou o território inimigo! Deseja aprimorá-la para o posto militar superior?</p>
+        <div class="promo-preview-box">
+          <div class="promo-unit-card" id="promo-normal-preview"></div>
+          <div style="font-size: 1.5rem; color: #f59e0b;">➜</div>
+          <div class="promo-unit-card promoted-card" id="promo-promoted-preview"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-promo-no" class="btn">Não promover</button>
+        <button id="btn-promo-yes" class="btn btn-primary">Promover unidade</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="victory-modal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3>Fim da batalha</h3>
+      </div>
+      <div class="modal-body victory-box">
+        <div id="victory-headline" class="victory-title solar-win">Vitória da Alvorada!</div>
+        <div id="victory-desc" class="victory-reason">O comando inimigo foi encurralado em xeque-mate.</div>
+        <div style="margin: 12px 0; padding: 10px; background: #1e293b; border-radius: 8px; font-size: 0.78rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+            <span style="color:#94a3b8">Turnos decorridos:</span>
+            <strong id="stats-turns">0</strong>
           </div>
-          <div style="display: flex; align-items: center; font-size: 1.5rem; font-weight: bold;">➜</div>
-          <div class="promo-card promoted" id="promo-evolved">
-            <div style="height: 50px; display: flex; align-items: center; justify-content: center;"></div>
-            <div class="name" id="promo-evolved-name"></div>
-            <div class="ability" id="promo-evolved-ability"></div>
+          <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+            <span style="color:#94a3b8">Baixas inimigas:</span>
+            <strong id="stats-captures">0</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8">Modo de jogo:</span>
+            <strong id="stats-mode">Jogador vs IA</strong>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn" id="btn-promo-no" style="flex: 1;">Não Promover</button>
-        <button class="btn btn-primary" id="btn-promo-yes" style="flex: 1;">Promover ⬆️</button>
+        <button id="btn-victory-restart" class="btn btn-primary" style="width: 100%;">Nova campanha</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-backdrop" id="victory-modal">
+  <div id="settings-modal" class="modal-backdrop">
     <div class="modal-window">
-      <div class="modal-body" style="text-align: center;">
-        <h2 id="victory-title" style="margin-bottom: 12px;">Vitória!</h2>
-        <p id="victory-desc" style="margin-bottom: 16px;"></p>
-        <div style="background: #1e293b; padding: 10px; border-radius: 6px; font-size: 0.75rem; margin-bottom: 16px;">
-          <div>Turnos: <strong id="stats-turns">0</strong></div>
-          <div>Capturas: <strong id="stats-captures">0</strong></div>
+      <div class="modal-header">
+        <h3>Configurações de guerra</h3>
+        <button class="modal-close" data-close="settings-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Modo de batalha</div>
+            <div class="setting-desc">Escolha quem comanda o exército das sombras</div>
+          </div>
+          <select id="opt-game-mode">
+            <option value="pve">Jogador vs computador (IA)</option>
+            <option value="pvp">2 jogadores (local)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Tática da IA</div>
+            <div class="setting-desc">Nível de cálculo do computador</div>
+          </div>
+          <select id="opt-ai-diff">
+            <option value="easy">Recruta (fácil)</option>
+            <option value="med" selected>Veterano (médio)</option>
+            <option value="hard">Estrategista geral (difícil)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Efeitos sonoros</div>
+            <div class="setting-desc">Sons de combate sintetizados</div>
+          </div>
+          <input type="checkbox" id="opt-sound-enabled" checked style="width:18px;height:18px;">
+        </div>
+        <div class="setting-item">
+          <div>
+            <div class="setting-label">Destaques estratégicos</div>
+            <div class="setting-desc">Mostrar casas de movimento e ameaça</div>
+          </div>
+          <input type="checkbox" id="opt-show-hints" checked style="width:18px;height:18px;">
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-primary" id="btn-restart-victory" style="flex: 1;">Nova Partida</button>
+        <button class="btn btn-primary" data-close="settings-modal">Salvar e voltar</button>
       </div>
     </div>
   </div>
 
-  <div class="modal-backdrop" id="rules-modal">
+  <div id="rules-modal" class="modal-backdrop">
     <div class="modal-window">
-      <div class="modal-header">📚 Regras do Shogi</div>
-      <div class="modal-body">
-        <h4 style="color: #f59e0b; margin: 8px 0;">🎯 Objetivo</h4>
-        <p>Capture o Rei inimigo em Xeque-Mate!</p>
-        <h4 style="color: #f59e0b; margin: 8px 0;">⚔️ Peças Capturadas</h4>
-        <p>Peças capturadas viram suas e podem ser "invocadas" em casas vazias!</p>
-        <h4 style="color: #f59e0b; margin: 8px 0;">⭐ Promoção</h4>
-        <p>Ao entrar nas 3 fileiras inimigas, peças podem evoluir para formas mais poderosas!</p>
+      <div class="modal-header">
+        <h3>Manual militar do shogi</h3>
+        <button class="modal-close" data-close="rules-modal">&times;</button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh;">
+        <div class="rules-section">
+          <h4>Objetivo supremo</h4>
+          <p>O objetivo é cercar e capturar o rei inimigo por meio do <strong>xeque-mate</strong>. Não é permitido realizar jogadas que coloquem ou deixem seu próprio rei em perigo.</p>
+        </div>
+        <div class="rules-section">
+          <h4>Grande regra: captura e arsenal</h4>
+          <p>Diferente do xadrez ocidental, as peças capturadas <strong>não morrem</strong>; elas viram prisioneiras e passam para o seu <em>arsenal de reserva</em>. No turno, você pode escolher mover uma unidade em campo ou <strong>invocar uma peça do arsenal</strong> em qualquer casa vazia.</p>
+        </div>
+        <div class="rules-section">
+          <h4>Território de promoção</h4>
+          <p>As 3 fileiras mais distantes do seu lado compõem a <em>zona de promoção</em> inimiga. Ao entrar, movimentar-se dentro ou sair dessa zona, sua peça pode ser promovida para uma forma superior e mais poderosa.</p>
+        </div>
+        <div class="rules-section">
+          <h4>As unidades e seus movimentos</h4>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Rei</div>
+            <div>Move 1 casa em qualquer direção. Comandante vital da batalha.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Torre</div>
+            <div>Move qualquer número de casas nas 4 direções ortogonais. Na promoção vira o <em>dragão-rei</em> e passa a mover 1 casa diagonal.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Bispo</div>
+            <div>Move qualquer número de casas nas diagonais. Na promoção vira o <em>cavalo alado</em> e ganha 1 casa ortogonal.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Ouro</div>
+            <div>Move 1 casa ortogonal ou 1 casa diagonal para frente. Não é promovível.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Prata</div>
+            <div>Move 1 casa para frente e diagonal. Na promoção passa a mover como general de ouro.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Cavalo</div>
+            <div>Salta 2 casas para frente e 1 para o lado. Na promoção passa a mover como general de ouro.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Lance</div>
+            <div>Move qualquer distância em linha reta para frente. Na promoção passa a mover como general de ouro.</div>
+          </div>
+          <div class="unit-rule-card">
+            <div style="font-weight:bold; width: 60px; color:#f59e0b">Peão</div>
+            <div>Move 1 casa em linha reta para frente e captura para frente. Na promoção vira <em>tokin</em> e move como general de ouro.</div>
+          </div>
+        </div>
+        <div class="rules-section">
+          <h4>Restrições de posicionamento</h4>
+          <p><strong>Nifu:</strong> não é permitido colocar um peão em uma coluna que já tenha outro peão seu não promovido.</p>
+          <p><strong>Uchifuzume:</strong> é proibido invocar um peão do arsenal para dar xeque-mate imediato ao rei adversário.</p>
+          <p><strong>Sem movimento:</strong> peões, lanças e cavalos não podem ser invocados em fileiras onde não tenham nenhum movimento legal futuro.</p>
+        </div>
       </div>
       <div class="modal-footer">
-        <button class="btn" id="close-rules" style="flex: 1;">Fechar</button>
+        <button class="btn btn-primary" data-close="rules-modal">Entendi, ao combate!</button>
       </div>
     </div>
+  </div>
+
+  <div id="diag-panel">
+    <strong>[DIAGNÓSTICO DO SISTEMA]</strong>
+    <div id="diag-logs"></div>
   </div>
 
   <script>
-    'use strict';
-    
-    const SENTE = 0;
-    const GOTE = 1;
-
-    const PIECE_DATA = {
-      K: { nome: 'Comandante Supremo', kanji: '玉', brasao: '♔', habilidade: 'Move 1 casa em qualquer direção' },
-      R: { nome: 'Balista de Cerco', kanji: '飛', brasao: '♜', habilidade: 'Move ilimitado em linhas' },
-      '+R': { nome: 'Titã de Guerra', kanji: '龍', brasao: '🐉', habilidade: 'Linhas + 1 diagonal' },
-      B: { nome: 'Místico da Luz', kanji: '角', brasao: '♝', habilidade: 'Move ilimitado na diagonal' },
-      '+B': { nome: 'Pegasus Celestial', kanji: '馬', brasao: '🦅', habilidade: 'Diagonal + 1 ortogonal' },
-      G: { nome: 'Guarda Dourada', kanji: '金', brasao: '⬡', habilidade: 'Move 1 casa (6 direções)' },
-      S: { nome: 'Espadachim de Prata', kanji: '銀', brasao: '◈', habilidade: 'Move 1 casa (5 direções)' },
-      '+S': { nome: 'Mestre da Guarda', kanji: '成銀', brasao: '✦', habilidade: 'Mesma mobilidade do Ouro' },
-      N: { nome: 'Cavalaria de Assalto', kanji: '桂', brasao: '♞', habilidade: 'Salta (2 frente, 1 lado)' },
-      '+N': { nome: 'Cavaleiro Alado', kanji: '成桂', brasao: '✦', habilidade: 'Mesma mobilidade do Ouro' },
-      L: { nome: 'Falange de Lanças', kanji: '香', brasao: '▲', habilidade: 'Avança ilimitado' },
-      '+L': { nome: 'Lança Veterana', kanji: '成香', brasao: '✦', habilidade: 'Mesma mobilidade do Ouro' },
-      P: { nome: 'Infantaria', kanji: '歩', brasao: '●', habilidade: 'Avança 1 casa' },
-      '+P': { nome: 'Soldado de Elite', kanji: 'と', brasao: '★', habilidade: 'Mesma mobilidade do Ouro' }
-    };
-
-    let gameState = {
-      board: [],
-      turn: SENTE,
-      reserves: { 0: {}, 1: {} },
-      selected: null,
-      selectedDrop: null,
-      validMoves: [],
-      lastMove: null,
-      gameOver: false,
-      soundOn: true,
-      turnCount: 1,
-      pendingPromo: null
-    };
-
-    let undoStack = [];
-    let aiRunning = false;
-
-    // INICIALIZAÇÃO
-    function initGame() {
-      gameState.board = createBoard();
-      gameState.turn = SENTE;
-      gameState.reserves[SENTE] = {};
-      gameState.reserves[GOTE] = {};
-      gameState.selected = null;
-      gameState.selectedDrop = null;
-      gameState.validMoves = [];
-      gameState.lastMove = null;
-      gameState.gameOver = false;
-      gameState.turnCount = 1;
-      gameState.pendingPromo = null;
-      undoStack = [];
-
-      for (let pt of ['P', 'L', 'N', 'S', 'G', 'B', 'R']) {
-        gameState.reserves[SENTE][pt] = 0;
-        gameState.reserves[GOTE][pt] = 0;
+    window.addEventListener('error', function(event) {
+      var diag = document.getElementById('diag-panel');
+      var logs = document.getElementById('diag-logs');
+      if (diag && logs) {
+        diag.style.display = 'block';
+        var entry = document.createElement('div');
+        entry.textContent = 'ERRO: ' + event.message + ' em ' + event.filename + ':' + event.lineno;
+        logs.appendChild(entry);
       }
+    });
 
-      updateUI();
-      logMove('⚔️ Batalha iniciada! Império Solar move primeiro.');
-    }
-
-    function createBoard() {
-      const b = Array(9).fill(null).map(() => Array(9).fill(null));
-      const backRank = ['L', 'N', 'S', 'G', 'K', 'G', 'S', 'N', 'L'];
-
-      for (let c = 0; c < 9; c++) {
-        b[0][c] = { type: backRank[c], player: GOTE };
-      }
-      b[1][1] = { type: 'R', player: GOTE };
-      b[1][7] = { type: 'B', player: GOTE };
-      for (let c = 0; c < 9; c++) {
-        b[2][c] = { type: 'P', player: GOTE };
-      }
-
-      for (let c = 0; c < 9; c++) {
-        b[6][c] = { type: 'P', player: SENTE };
-      }
-      b[7][1] = { type: 'B', player: SENTE };
-      b[7][7] = { type: 'R', player: SENTE };
-      for (let c = 0; c < 9; c++) {
-        b[8][c] = { type: backRank[c], player: SENTE };
-      }
-
-      return b;
-    }
-
-    function cloneBoard(b) {
-      return b.map(row => [...row]);
-    }
-
-    function findKing(board, player) {
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          if (board[r][c]?.type === 'K' && board[r][c]?.player === player) {
-            return { r, c };
-          }
-        }
-      }
-      return null;
-    }
-
-    function isInCheck(board, player) {
-      const king = findKing(board, player);
-      if (!king) return false;
-
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const p = board[r][c];
-          if (p?.player !== (1 - player)) continue;
-
-          const moves = getPseudoMoves(board, r, c);
-          if (moves.some(m => m.r === king.r && m.c === king.c)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function getPseudoMoves(board, r, c) {
-      const piece = board[r][c];
-      if (!piece) return [];
-
-      const moves = [];
-      const fwd = piece.player === SENTE ? -1 : 1;
-
-      const tryStep = (dr, dc) => {
-        const nr = r + dr, nc = c + dc;
-        if (nr < 0 || nr > 8 || nc < 0 || nc > 8) return;
-        if (board[nr][nc]?.player === piece.player) return;
-        moves.push({ r: nr, c: nc });
+    (function() {
+      'use strict';
+      var SENTE = 0;
+      var GOTE = 1;
+      var PROMOTABLE_PIECES = ['P', 'L', 'N', 'S', 'B', 'R'];
+      var PIECE_NAMES = {
+        'K': { name: 'Comandante Supremo', kanji: '玉', sigil: '♔' },
+        'R': { name: 'Balista de Cerco', kanji: '飛', sigil: '♜' },
+        '+R': { name: 'Titã de Guerra', kanji: '龍', sigil: '🐉' },
+        'B': { name: 'Místico da Luz', kanji: '角', sigil: '♝' },
+        '+B': { name: 'Pégaso Celestial', kanji: '馬', sigil: '🦅' },
+        'G': { name: 'Guarda Dourada', kanji: '金', sigil: '⬡' },
+        'S': { name: 'Espadachim de Prata', kanji: '銀', sigil: '◈' },
+        '+S': { name: 'Mestre da Guarda', kanji: '成銀', sigil: '✦' },
+        'N': { name: 'Cavalaria de Assalto', kanji: '桂', sigil: '♞' },
+        '+N': { name: 'Cavaleiro Alado', kanji: '成桂', sigil: '✦' },
+        'L': { name: 'Falange de Lanças', kanji: '香', sigil: '▲' },
+        '+L': { name: 'Lança Veterana', kanji: '成香', sigil: '✦' },
+        'P': { name: 'Infantaria', kanji: '歩', sigil: '●' },
+        '+P': { name: 'Soldado de Elite', kanji: 'と', sigil: '★' }
       };
-
-      const tryRay = (dr, dc) => {
-        for (let step = 1; step < 9; step++) {
-          const nr = r + dr * step, nc = c + dc * step;
-          if (nr < 0 || nr > 8 || nc < 0 || nc > 8) break;
-          if (!board[nr][nc]) {
-            moves.push({ r: nr, c: nc });
-          } else {
-            if (board[nr][nc].player !== piece.player) {
-              moves.push({ r: nr, c: nc });
-            }
-            break;
-          }
-        }
+      var PIECE_VALUES = {
+        'P': 100, '+P': 420,
+        'L': 300, '+L': 420,
+        'N': 350, '+N': 420,
+        'S': 500, '+S': 550,
+        'G': 580,
+        'B': 850, '+B': 1150,
+        'R': 1000, '+R': 1350,
+        'K': 20000
       };
-
-      const type = piece.type;
-      switch (type) {
-        case 'K':
-          for (let dr = -1; dr <= 1; dr++) {
-            for (let dc = -1; dc <= 1; dc++) {
-              if (dr || dc) tryStep(dr, dc);
-            }
-          }
-          break;
-        case 'R':
-          tryRay(-1, 0); tryRay(1, 0); tryRay(0, -1); tryRay(0, 1);
-          break;
-        case '+R':
-          tryRay(-1, 0); tryRay(1, 0); tryRay(0, -1); tryRay(0, 1);
-          tryStep(-1, -1); tryStep(-1, 1); tryStep(1, -1); tryStep(1, 1);
-          break;
-        case 'B':
-          tryRay(-1, -1); tryRay(-1, 1); tryRay(1, -1); tryRay(1, 1);
-          break;
-        case '+B':
-          tryRay(-1, -1); tryRay(-1, 1); tryRay(1, -1); tryRay(1, 1);
-          tryStep(-1, 0); tryStep(1, 0); tryStep(0, -1); tryStep(0, 1);
-          break;
-        case 'G':
-        case '+S': case '+N': case '+L': case '+P':
-          tryStep(fwd, 0); tryStep(fwd, -1); tryStep(fwd, 1);
-          tryStep(0, -1); tryStep(0, 1); tryStep(-fwd, 0);
-          break;
-        case 'S':
-          tryStep(fwd, 0); tryStep(fwd, -1); tryStep(fwd, 1);
-          tryStep(-fwd, -1); tryStep(-fwd, 1);
-          break;
-        case 'N':
-          tryStep(fwd * 2, -1); tryStep(fwd * 2, 1);
-          break;
-        case 'L':
-          tryRay(fwd, 0);
-          break;
-        case 'P':
-          tryStep(fwd, 0);
-          break;
-      }
-      return moves;
-    }
-
-    function getLegalMoves(board, r, c) {
-      const piece = board[r][c];
-      if (!piece) return [];
-
-      const pseudo = getPseudoMoves(board, r, c);
-      return pseudo.filter(m => {
-        const test = cloneBoard(board);
-        test[m.r][m.c] = test[r][c];
-        test[r][c] = null;
-        return !isInCheck(test, piece.player);
-      });
-    }
-
-    function onTileClick(r, c) {
-      if (gameState.gameOver || gameState.turn === GOTE) return;
-
-      const piece = gameState.board[r][c];
-
-      if (gameState.selectedDrop) {
-        if (gameState.validMoves.some(m => m.r === r && m.c === c)) {
-          executeDrop(gameState.selectedDrop.type, r, c);
-          return;
+      var DROP_VALUES = {
+        'P': 120, 'L': 280, 'N': 320, 'S': 480, 'G': 550, 'B': 800, 'R': 950
+      };
+      var audioCtx = null;
+      var soundEnabled = true;
+      function getAudioContext() {
+        if (!audioCtx) {
+          var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
         }
-        gameState.selectedDrop = null;
-        gameState.validMoves = [];
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
       }
-
-      if (gameState.selected) {
-        const from = gameState.selected;
-        if (from.r === r && from.c === c) {
-          gameState.selected = null;
-          gameState.validMoves = [];
-          updateUI();
-          return;
-        }
-
-        const move = gameState.validMoves.find(m => m.r === r && m.c === c);
-        if (move) {
-          if (move.promoOpt && piece?.type !== 'K' && piece?.type !== 'G') {
-            gameState.pendingPromo = { from, to: { r, c } };
-            showPromoModal(piece.type);
-          } else {
-            executeMove(from, { r, c }, false);
+      function playSound(type) {
+        if (!soundEnabled) return;
+        try {
+          var ctx = getAudioContext(); if (!ctx) return;
+          var t = ctx.currentTime;
+          if (type === 'move') {
+            var osc = ctx.createOscillator(); var gain = ctx.createGain();
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(220, t); osc.frequency.exponentialRampToValueAtTime(60, t + 0.08); gain.gain.setValueAtTime(0.25, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08); osc.connect(gain); gain.connect(ctx.destination); osc.start(t); osc.stop(t + 0.09);
+          } else if (type === 'capture') {
+            var osc1 = ctx.createOscillator(); var gain1 = ctx.createGain(); osc1.type='sawtooth'; osc1.frequency.setValueAtTime(480, t); osc1.frequency.exponentialRampToValueAtTime(110, t + 0.22); gain1.gain.setValueAtTime(0.35, t); gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.22); osc1.connect(gain1); gain1.connect(ctx.destination); osc1.start(t); osc1.stop(t + 0.23);
+            var osc2 = ctx.createOscillator(); var gain2 = ctx.createGain(); osc2.type='sine'; osc2.frequency.setValueAtTime(1400, t); osc2.frequency.exponentialRampToValueAtTime(600, t + 0.15); gain2.gain.setValueAtTime(0.2, t); gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.15); osc2.connect(gain2); gain2.connect(ctx.destination); osc2.start(t); osc2.stop(t + 0.16);
+          } else if (type === 'drop') {
+            var oscDrop = ctx.createOscillator(); var gainDrop = ctx.createGain(); oscDrop.type='triangle'; oscDrop.frequency.setValueAtTime(140, t); oscDrop.frequency.exponentialRampToValueAtTime(45, t + 0.16); gainDrop.gain.setValueAtTime(0.3, t); gainDrop.gain.exponentialRampToValueAtTime(0.001, t + 0.16); oscDrop.connect(gainDrop); gainDrop.connect(ctx.destination); oscDrop.start(t); oscDrop.stop(t + 0.17);
+          } else if (type === 'promo') {
+            var notes = [440, 554, 659, 880]; notes.forEach(function(freq, index) { var o = ctx.createOscillator(); var g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(freq, t + index * 0.06); g.gain.setValueAtTime(0.2, t + index * 0.06); g.gain.exponentialRampToValueAtTime(0.001, t + (index + 1) * 0.12); o.connect(g); g.connect(ctx.destination); o.start(t + index * 0.06); o.stop(t + (index + 1) * 0.14); });
+          } else if (type === 'check') {
+            var o1 = ctx.createOscillator(); var g1 = ctx.createGain(); o1.type='sawtooth'; o1.frequency.setValueAtTime(196, t); o1.frequency.linearRampToValueAtTime(185, t + 0.35); g1.gain.setValueAtTime(0.3, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.4); o1.connect(g1); g1.connect(ctx.destination); o1.start(t); o1.stop(t + 0.42);
+          } else if (type === 'victory') {
+            var chords = [{ f:523.25, time:0 }, { f:659.25,time:0.12 }, { f:783.99,time:0.24 }, { f:1046.50,time:0.36 }]; chords.forEach(function(item) { var oc = ctx.createOscillator(); var gc = ctx.createGain(); oc.type='sine'; oc.frequency.setValueAtTime(item.f, t + item.time); gc.gain.setValueAtTime(0.3, t + item.time); gc.gain.exponentialRampToValueAtTime(0.001, t + item.time + 0.6); oc.connect(gc); gc.connect(ctx.destination); oc.start(t + item.time); oc.stop(t + item.time + 0.65); });
           }
-          return;
-        }
+        } catch (e) { console.warn('Audio error:', e); }
       }
-
-      if (piece?.player === gameState.turn) {
-        gameState.selected = { r, c };
-        gameState.validMoves = getLegalMoves(gameState.board, r, c);
-        gameState.validMoves.forEach(m => {
-          m.promoOpt = canPromote(piece.type, r, m.r);
-        });
-        updateUI();
-      }
-    }
-
-    function canPromote(type, fromR, toR) {
-      if (type.startsWith('+')) return false;
-      if (type === 'K' || type === 'G') return false;
-      const inZone = gameState.turn === SENTE ? (toR <= 2) : (toR >= 6);
-      return inZone;
-    }
-
-    function executeMove(from, to, promote) {
-      saveUndo();
-
-      const piece = gameState.board[from.r][from.c];
-      const target = gameState.board[to.r][to.c];
-
-      if (target) {
-        const raw = target.type.replace('+', '');
-        gameState.reserves[gameState.turn][raw] = (gameState.reserves[gameState.turn][raw] || 0) + 1;
-        playSound('capture');
-      } else {
-        playSound('move');
-      }
-
-      let finalType = piece.type;
-      if (promote) {
-        finalType = '+' + piece.type;
-        playSound('promo');
-      }
-
-      gameState.board[to.r][to.c] = { type: finalType, player: piece.player };
-      gameState.board[from.r][from.c] = null;
-
-      gameState.lastMove = { from, to, piece: finalType };
-      gameState.selected = null;
-      gameState.selectedDrop = null;
-      gameState.validMoves = [];
-      gameState.pendingPromo = null;
-
-      endTurn();
-    }
-
-    function executeDrop(type, r, c) {
-      saveUndo();
-
-      gameState.reserves[gameState.turn][type]--;
-      gameState.board[r][c] = { type, player: gameState.turn };
-
-      gameState.selected = null;
-      gameState.selectedDrop = null;
-      gameState.validMoves = [];
-      playSound('drop');
-
-      endTurn();
-    }
-
-    function endTurn() {
-      gameState.turn = 1 - gameState.turn;
-      if (gameState.turn === SENTE) gameState.turnCount++;
-
-      const inCheck = isInCheck(gameState.board, gameState.turn);
-      const hasMove = hasAnyMove(gameState.board, gameState.turn);
-
-      if (!hasMove) {
-        gameState.gameOver = true;
-        const winner = 1 - gameState.turn;
-        showVictory(winner, inCheck ? 'Xeque-Mate Conquistado!' : 'Impasse na Batalha!');
-      } else if (inCheck) {
-        playSound('check');
-      }
-
-      updateUI();
-
-      if (!gameState.gameOver && gameState.turn === GOTE) {
-        setTimeout(() => triggerAI(), 400);
-      }
-    }
-
-    function hasAnyMove(board, player) {
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          if (board[r][c]?.player === player) {
-            if (getLegalMoves(board, r, c).length > 0) return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    function triggerAI() {
-      if (aiRunning || gameState.gameOver || gameState.turn !== GOTE) return;
-      aiRunning = true;
-
-      const moves = [];
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          if (gameState.board[r][c]?.player === GOTE) {
-            getLegalMoves(gameState.board, r, c).forEach(m => {
-              moves.push({ from: { r, c }, to: m });
-            });
-          }
-        }
-      }
-
-      if (moves.length > 0) {
-        const move = moves[Math.floor(Math.random() * Math.min(moves.length, 10))];
-        executeMove(move.from, move.to, false);
-      }
-
-      aiRunning = false;
-    }
-
-    function saveUndo() {
-      undoStack.push({
-        board: cloneBoard(gameState.board),
-        turn: gameState.turn,
-        reserves: JSON.parse(JSON.stringify(gameState.reserves)),
-        turnCount: gameState.turnCount
-      });
-      if (undoStack.length > 20) undoStack.shift();
-    }
-
-    function undoMove() {
-      if (undoStack.length === 0 || gameState.gameOver) return;
-      const state = undoStack.pop();
-      gameState.board = state.board;
-      gameState.turn = state.turn;
-      gameState.reserves = state.reserves;
-      gameState.turnCount = state.turnCount;
-      gameState.selected = null;
-      gameState.validMoves = [];
-      logMove('↶ Movimento desfeito pelos generais.');
-      updateUI();
-    }
-
-    function logMove(text) {
-      const log = document.getElementById('move-history');
-      log.textContent = text;
-    }
-
-    function updateUI() {
-      renderBoard();
-      renderReserves();
-      updateStatus();
-    }
-
-    function renderBoard() {
-      const board = document.getElementById('shogi-board');
-      board.innerHTML = '';
-
-      const inCheck = isInCheck(gameState.board, gameState.turn);
-      const king = inCheck ? findKing(gameState.board, gameState.turn) : null;
-
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          const tile = document.createElement('div');
-          tile.className = 'tile';
-
-          if (gameState.selected?.r === r && gameState.selected?.c === c) {
-            tile.classList.add('selected');
-          }
-
-          if (gameState.validMoves.some(m => m.r === r && m.c === c)) {
-            tile.classList.add('valid-move');
-          }
-
-          if (king?.r === r && king?.c === c) {
-            tile.classList.add('in-check');
-          }
-
-          const piece = gameState.board[r][c];
-          if (piece) {
-            const p = document.createElement('div');
-            p.className = 'shogi-piece';
-            if (piece.player === GOTE) p.classList.add('player-gote');
-            if (piece.type.startsWith('+')) p.classList.add('promoted');
-            
-            p.innerHTML = renderPieceIcon(piece.type, piece.player);
-            
-            // Tooltip com nome em português
-            const tooltip = document.createElement('div');
-            tooltip.className = 'piece-tooltip';
-            tooltip.textContent = PIECE_DATA[piece.type].nome;
-            p.appendChild(tooltip);
-            
-            tile.appendChild(p);
-          }
-
-          tile.addEventListener('click', () => onTileClick(r, c));
-          board.appendChild(tile);
-        }
-      }
-    }
-
-    function renderPieceIcon(type, player) {
-      const isSolar = player === SENTE;
-      const baseColor = isSolar ? '#f59e0b' : '#a855f7';
-      const darkColor = isSolar ? '#78350f' : '#3b0764';
-      const isPromoted = type.startsWith('+');
-      const brasao = PIECE_DATA[type].brasao;
-
-      // SVG com design premium e brasão
-      return `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="pieceGrad${type}${player}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="${isPromoted ? '#fbbf24' : '#fffbeb'}"/>
-            <stop offset="50%" stop-color="${baseColor}"/>
-            <stop offset="100%" stop-color="${darkColor}"/>
-          </linearGradient>
-          <filter id="shadow${type}${player}">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.8" flood-color="#000000"/>
-          </filter>
-        </defs>
-        
-        <!-- Base da peça com relevo -->
-        <polygon points="50,5 85,35 80,115 20,115 15,35" fill="url(#pieceGrad${type}${player})" stroke="${darkColor}" stroke-width="2.5" filter="url(#shadow${type}${player})" />
-        
-        <!-- Brilho interno -->
-        <polygon points="50,10 80,35 75,110 25,110 20,35" fill="none" stroke="${isPromoted ? '#fef08a' : '#ffffff'}" stroke-width="1" opacity="0.4" />
-        
-        <!-- Decoração promocional -->
-        ${isPromoted ? `<circle cx="50" cy="25" r="4" fill="#ff6b6b" opacity="0.6" />
-        <circle cx="38" cy="40" r="2" fill="#fbbf24" />
-        <circle cx="62" cy="40" r="2" fill="#fbbf24" />` : ''}
-        
-        <!-- BRASÃO NO TOPO -->
-        <text x="50" y="35" font-size="20" text-anchor="middle" fill="${isPromoted ? '#fbbf24' : baseColor}" opacity="0.9">${brasao}</text>
-        
-        <!-- Texto Kanji em baixo -->
-        <text x="50" y="90" font-family="serif" font-size="38" font-weight="bold" text-anchor="middle" fill="${darkColor}" stroke="${isPromoted ? '#fbbf24' : '#ffffff'}" stroke-width="0.5">${PIECE_DATA[type].kanji}</text>
-      </svg>`;
-    }
-
-    function renderReserves() {
-      const sente = document.getElementById('sente-slots');
-      const gote = document.getElementById('gote-slots');
-      sente.innerHTML = '';
-      gote.innerHTML = '';
-
-      ['R', 'B', 'G', 'S', 'N', 'L', 'P'].forEach(type => {
-        const sc = gameState.reserves[SENTE][type];
-        const gc = gameState.reserves[GOTE][type];
-
-        if (sc > 0) {
-          const card = createReserveCard(type, sc, SENTE);
-          sente.appendChild(card);
-        }
-        if (gc > 0) {
-          const card = createReserveCard(type, gc, GOTE);
-          gote.appendChild(card);
-        }
-      });
-    }
-
-    function createReserveCard(type, count, player) {
-      const card = document.createElement('div');
-      card.className = 'reserve-piece-card';
-      if (gameState.selectedDrop?.type === type && gameState.selectedDrop?.player === player) {
-        card.classList.add('active');
-      }
-
-      card.innerHTML = renderPieceIcon(type, player);
-      
-      // Tooltip no arsenal também
-      const wrapper = document.createElement('div');
-      wrapper.style.position = 'relative';
-      wrapper.style.width = '100%';
-      wrapper.style.height = '100%';
-      
-      if (count > 1) {
-        const pill = document.createElement('div');
-        pill.className = 'count-pill';
-        pill.textContent = count;
-        card.appendChild(pill);
-      }
-
-      card.addEventListener('click', () => {
-        if (gameState.turn !== player) return;
-        if (gameState.selectedDrop?.type === type) {
-          gameState.selectedDrop = null;
-          gameState.validMoves = [];
+      function renderPieceSvg(type, player, isPromoted) {
+        var isSolar = (player === SENTE); var baseColor = isSolar ? '#f59e0b' : '#a855f7'; var darkColor = isSolar ? '#78350f' : '#3b0764'; var lightColor = isSolar ? '#fef08a' : '#e9d5ff'; var accentColor = isPromoted ? (isSolar ? '#ef4444' : '#06b6d4') : (isSolar ? '#b45309' : '#6b21a8'); var sigil = PIECE_NAMES[type] ? PIECE_NAMES[type].sigil : ''; var kanji = PIECE_NAMES[type] ? PIECE_NAMES[type].kanji : '';
+        var svg = '<svg viewBox="0 0 100 115" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">';
+        var gradId = 'grad_' + (type.replace('+', 'p')) + '_' + player + '_' + (isPromoted ? 'pro' : 'norm');
+        svg += '<defs>';
+        svg += '<linearGradient id="' + gradId + '" x1="0%" y1="0%" x2="100%" y2="100%">';
+        if (isSolar) {
+          svg += '<stop offset="0%" stop-color="#fffbeb"/>';
+          svg += '<stop offset="45%" stop-color="' + (isPromoted ? '#fef3c7' : '#fde68a') + '"/>';
+          svg += '<stop offset="100%" stop-color="' + (isPromoted ? '#f59e0b' : '#d97706') + '"/>';
         } else {
-          gameState.selectedDrop = { type, player };
-          gameState.validMoves = [];
-          for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-              if (!gameState.board[r][c]) {
-                gameState.validMoves.push({ r, c });
-              }
-            }
+          svg += '<stop offset="0%" stop-color="#3b2d54"/>';
+          svg += '<stop offset="45%" stop-color="' + (isPromoted ? '#2e1065' : '#1e1b4b') + '"/>';
+          svg += '<stop offset="100%" stop-color="' + (isPromoted ? '#4c1d95' : '#0f172a') + '"/>';
+        }
+        svg += '</linearGradient>';
+        if (isPromoted) {
+          svg += '<filter id="glow_' + gradId + '" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>';
+        }
+        svg += '</defs>';
+        var pathPoints = '50,4 88,28 80,110 20,110 12,28';
+        var borderStroke = isSolar ? (isPromoted ? '#dc2626' : '#92400e') : (isPromoted ? '#06b6d4' : '#6b21a8');
+        svg += '<polygon points="50,7 90,30 82,113 18,113 10,30" fill="rgba(0,0,0,0.6)" />';
+        svg += '<polygon points="' + pathPoints + '" fill="url(#' + gradId + ')" stroke="' + borderStroke + '" stroke-width="3" stroke-linejoin="round" />';
+        var innerPoints = '50,12 82,32 75,103 25,103 18,32'; var innerStroke = isSolar ? 'rgba(245, 158, 11, 0.4)' : 'rgba(168, 85, 247, 0.4)';
+        svg += '<polygon points="' + innerPoints + '" fill="none" stroke="' + innerStroke + '" stroke-width="1.5" stroke-dasharray="' + (isPromoted ? 'none' : '4,2') + '" />';
+        var emblemSvg = '';
+        var rawType = type.replace('+', '');
+        if (rawType === 'K') {
+          if (isSolar) {
+            emblemSvg += '<path d="M30 65 L36 45 L50 55 L64 45 L70 65 Z" fill="#d97706" stroke="#78350f" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="40" r="4.5" fill="#ef4444" stroke="#fff" stroke-width="1"/>';
+            emblemSvg += '<circle cx="36" cy="42" r="3" fill="#fbbf24"/>';
+            emblemSvg += '<circle cx="64" cy="42" r="3" fill="#fbbf24"/>';
+            emblemSvg += '<circle cx="50" cy="58" r="6" fill="#fbbf24" stroke="#b45309" stroke-width="1.5"/>';
+          } else {
+            emblemSvg += '<path d="M32 68 L26 40 L42 54 L50 36 L58 54 L74 40 L68 68 Z" fill="#581c87" stroke="#a855f7" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="34" r="4" fill="#06b6d4" stroke="#fff" stroke-width="1"/>';
+            emblemSvg += '<path d="M22 36 Q32 46 36 58" stroke="#06b6d4" stroke-width="2" fill="none"/>';
+            emblemSvg += '<path d="M78 36 Q68 46 64 58" stroke="#06b6d4" stroke-width="2" fill="none"/>';
+          }
+        } else if (rawType === 'R') {
+          if (!isPromoted) {
+            emblemSvg += '<rect x="32" y="44" width="36" height="24" rx="3" fill="'+(isSolar ? '#b45309' : '#3b0764')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+            emblemSvg += '<path d="M32 44 L36 36 L44 36 L46 44 L54 44 L56 36 L64 36 L68 44" fill="'+(isSolar ? '#d97706' : '#581c87')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+            emblemSvg += '<line x1="50" y1="36" x2="50" y2="68" stroke="'+(isSolar ? '#fde68a' : '#c084fc')+'" stroke-width="2"/>';
+            emblemSvg += '<line x1="32" y1="56" x2="68" y2="56" stroke="'+(isSolar ? '#fde68a' : '#c084fc')+'" stroke-width="2"/>';
+          } else {
+            emblemSvg += '<path d="M30 46 L50 32 L70 46 L65 68 L35 68 Z" fill="'+(isSolar ? '#dc2626' : '#0891b2')+'" stroke="#fff" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="52" r="7" fill="#fbbf24" stroke="#b91c1c" stroke-width="2"/>';
+            emblemSvg += '<path d="M24 38 L32 46 M76 38 L68 46" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>';
+          }
+        } else if (rawType === 'B') {
+          if (!isPromoted) {
+            emblemSvg += '<polygon points="50,34 68,52 50,70 32,52" fill="'+(isSolar ? '#d97706' : '#4c1d95')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="52" r="5" fill="'+(isSolar ? '#fef08a' : '#06b6d4')+'"/>';
+            emblemSvg += '<line x1="32" y1="34" x2="68" y2="70" stroke="'+(isSolar ? '#78350f' : '#a855f7')+'" stroke-width="1.5"/>';
+            emblemSvg += '<line x1="68" y1="34" x2="32" y2="70" stroke="'+(isSolar ? '#78350f' : '#a855f7')+'" stroke-width="1.5"/>';
+          } else {
+            emblemSvg += '<polygon points="50,30 72,52 50,72 28,52" fill="'+(isSolar ? '#dc2626' : '#0e7490')+'" stroke="#fff" stroke-width="1.5"/>';
+            emblemSvg += '<path d="M26 52 Q38 34 50 30 Q62 34 74 52" fill="none" stroke="#fcd34d" stroke-width="2.5"/>';
+            emblemSvg += '<circle cx="50" cy="52" r="6" fill="#fff"/>';
+          }
+        } else if (rawType === 'G') {
+          emblemSvg += '<path d="M34 38 L66 38 L66 56 Q50 72 34 56 Z" fill="'+(isSolar ? '#d97706' : '#581c87')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+          emblemSvg += '<path d="M50 42 L50 64" stroke="'+(isSolar ? '#fef08a' : '#c084fc')+'" stroke-width="2.5"/>';
+          emblemSvg += '<path d="M38 48 L62 48" stroke="'+(isSolar ? '#fef08a' : '#c084fc')+'" stroke-width="2.5"/>';
+        } else if (rawType === 'S') {
+          if (!isPromoted) {
+            emblemSvg += '<path d="M34 40 L66 40 L50 68 Z" fill="'+(isSolar ? '#94a3b8' : '#64748b')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="46" r="4" fill="#fff"/>';
+            emblemSvg += '<line x1="42" y1="62" x2="58" y2="62" stroke="#fff" stroke-width="2"/>';
+          } else {
+            emblemSvg += '<path d="M34 38 L66 38 L66 56 Q50 72 34 56 Z" fill="'+(isSolar ? '#dc2626' : '#0e7490')+'" stroke="#fff" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="50" r="5" fill="#fcd34d"/>';
+          }
+        } else if (rawType === 'N') {
+          if (!isPromoted) {
+            emblemSvg += '<path d="M36 66 L36 48 Q42 36 56 38 L64 46 L54 52 L60 66 Z" fill="'+(isSolar ? '#b45309' : '#3b0764')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="48" cy="44" r="2.5" fill="#fef08a"/>';
+          } else {
+            emblemSvg += '<path d="M34 38 L66 38 L66 56 Q50 72 34 56 Z" fill="'+(isSolar ? '#dc2626' : '#0e7490')+'" stroke="#fff" stroke-width="1.5"/>';
+            emblemSvg += '<path d="M38 46 Q50 36 62 46" stroke="#fef08a" stroke-width="2" fill="none"/>';
+          }
+        } else if (rawType === 'L') {
+          if (!isPromoted) {
+            emblemSvg += '<polygon points="50,32 58,46 53,46 53,68 47,68 47,46 42,46" fill="'+(isSolar ? '#92400e' : '#581c87')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+          } else {
+            emblemSvg += '<path d="M34 38 L66 38 L66 56 Q50 72 34 56 Z" fill="'+(isSolar ? '#dc2626' : '#0e7490')+'" stroke="#fff" stroke-width="1.5"/>';
+            emblemSvg += '<line x1="50" y1="40" x2="50" y2="64" stroke="#fff" stroke-width="2"/>';
+          }
+        } else if (rawType === 'P') {
+          if (!isPromoted) {
+            emblemSvg += '<circle cx="50" cy="52" r="11" fill="'+(isSolar ? '#b45309' : '#3b0764')+'" stroke="'+borderStroke+'" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="52" r="5" fill="'+(isSolar ? '#fde68a' : '#a855f7')+'"/>';
+          } else {
+            emblemSvg += '<path d="M34 38 L66 38 L66 56 Q50 72 34 56 Z" fill="'+(isSolar ? '#dc2626' : '#0e7490')+'" stroke="#fff" stroke-width="1.5"/>';
+            emblemSvg += '<circle cx="50" cy="50" r="5" fill="#fde68a" stroke="#fff" stroke-width="1"/>';
           }
         }
-        updateUI();
-      });
-
-      return card;
-    }
-
-    function updateStatus() {
-      const badge = document.getElementById('army-badge');
-      const status = document.getElementById('game-status');
-
-      if (gameState.turn === SENTE) {
-        badge.className = 'army-badge solar';
-        badge.innerHTML = '<span>⭐ Império Solar</span>';
-      } else {
-        badge.className = 'army-badge shadow';
-        badge.innerHTML = '<span>🌙 Império das Sombras</span>';
+        svg += emblemSvg;
+        svg += '<text x="50" y="96" font-family="' + getCssFontFamily() + '" font-size="21" font-weight="900" text-anchor="middle" fill="'+(isPromoted ? (isSolar ? '#dc2626' : '#06b6d4') : (isSolar ? '#451a03' : '#e2e8f0'))+'" stroke="'+(isPromoted ? '#ffffff' : (isSolar ? '#fef08a' : '#1e1b4b'))+'" stroke-width="0.8" letter-spacing="1">' + kanji + '</text>';
+        svg += '<text x="50" y="18" font-size="16" text-anchor="middle" fill="'+(isSolar ? '#fff7d6' : '#f5d0fe')+'">' + sigil + '</text>';
+        svg += '</svg>';
+        return svg;
       }
-
-      const inCheck = isInCheck(gameState.board, gameState.turn);
-      if (inCheck) {
-        status.className = 'game-message alert';
-        status.textContent = '⚠️ XEQUE! Rei sob ataque!';
-      } else {
-        status.className = 'game-message';
-        status.textContent = `Turno ${gameState.turnCount}`;
+      function getCssFontFamily() { return getComputedStyle(document.documentElement).getPropertyValue('font-family').trim() || 'sans-serif'; }
+      var gameState = {
+        board: [], turn: SENTE, reserves: { 0: {'P':0,'L':0,'N':0,'S':0,'G':0,'B':0,'R':0}, 1: {'P':0,'L':0,'N':0,'S':0,'G':0,'B':0,'R':0} }, selectedSquare: null, selectedDrop: null, validMoves: [], lastMove: null, moveHistory: [], gameOver: false, gameMode: 'pve', aiDifficulty: 'med', showHints: true, turnCount: 1, pendingPromotion: null
+      };
+      function createInitialBoard() {
+        var b = []; for (var r = 0; r < 9; r++) { var row = []; for (var c = 0; c < 9; c++) row.push(null); b.push(row); }
+        var backRank = ['L','N','S','G','K','G','S','N','L'];
+        for (var c = 0; c < 9; c++) b[0][c] = { type: backRank[c], player: GOTE };
+        b[1][1] = { type: 'R', player: GOTE }; b[1][7] = { type: 'B', player: GOTE };
+        for (var c = 0; c < 9; c++) b[2][c] = { type: 'P', player: GOTE };
+        for (var c = 0; c < 9; c++) b[6][c] = { type: 'P', player: SENTE };
+        b[7][1] = { type: 'B', player: SENTE }; b[7][7] = { type: 'R', player: SENTE };
+        for (var c = 0; c < 9; c++) b[8][c] = { type: backRank[c], player: SENTE };
+        return b;
       }
-    }
-
-    function playSound(type) {
-      if (!gameState.soundOn) return;
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const t = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        if (type === 'move') {
-          osc.frequency.setValueAtTime(220, t);
-          osc.frequency.exponentialRampToValueAtTime(60, t + 0.1);
-          gain.gain.setValueAtTime(0.1, t);
-          gain.gain.exponentialRampToValueAtTime(0, t + 0.1);
-          osc.start(t);
-          osc.stop(t + 0.1);
-        } else if (type === 'capture') {
-          osc.frequency.setValueAtTime(440, t);
-          osc.frequency.exponentialRampToValueAtTime(100, t + 0.15);
-          gain.gain.setValueAtTime(0.2, t);
-          gain.gain.exponentialRampToValueAtTime(0, t + 0.15);
-          osc.start(t);
-          osc.stop(t + 0.15);
-        } else if (type === 'promo' || type === 'check') {
-          osc.frequency.setValueAtTime(880, t);
-          gain.gain.setValueAtTime(0.15, t);
-          gain.gain.exponentialRampToValueAtTime(0, t + 0.2);
-          osc.start(t);
-          osc.stop(t + 0.2);
-        } else if (type === 'drop') {
-          osc.frequency.setValueAtTime(150, t);
-          gain.gain.setValueAtTime(0.1, t);
-          gain.gain.exponentialRampToValueAtTime(0, t + 0.12);
-          osc.start(t);
-          osc.stop(t + 0.12);
+      function initGame() {
+        gameState.board = createInitialBoard(); gameState.turn = SENTE;
+        gameState.reserves[SENTE] = { 'P':0, 'L':0, 'N':0, 'S':0, 'G':0, 'B':0, 'R':0 };
+        gameState.reserves[GOTE] = { 'P':0, 'L':0, 'N':0, 'S':0, 'G':0, 'B':0, 'R':0 };
+        gameState.selectedSquare = null; gameState.selectedDrop = null; gameState.validMoves = []; gameState.lastMove = null; gameState.moveHistory = []; gameState.gameOver = false; gameState.turnCount = 1; gameState.pendingPromotion = null; updateUI(); logHistoryEntry('A batalha teve início! O Império Solar avança primeiro.');
+      }
+      function isInsideBoard(r, c) { return r >= 0 && r < 9 && c >= 0 && c < 9; }
+      function isPromotionZone(row, player) { return (player === SENTE) ? (row <= 2) : (row >= 6); }
+      function isMandatoryPromotion(pieceType, toRow, player) {
+        var raw = pieceType.replace('+', ''); if (player === SENTE) { if (raw === 'P' || raw === 'L') return toRow === 0; if (raw === 'N') return toRow <= 1; } else { if (raw === 'P' || raw === 'L') return toRow === 8; if (raw === 'N') return toRow >= 7; } return false;
+      }
+      function canPromote(pieceType, fromRow, toRow, player) {
+        if (pieceType.indexOf('+') !== -1) return false; if (pieceType === 'K' || pieceType === 'G') return false; return isPromotionZone(fromRow, player) || isPromotionZone(toRow, player);
+      }
+      function getPseudoMoves(board, r, c) {
+        var piece = board[r][c]; if (!piece) return []; var player = piece.player; var type = piece.type; var moves = []; var fwd = (player === SENTE) ? -1 : 1;
+        function tryStep(dr, dc) { var nr = r + dr; var nc = c + dc; if (!isInsideBoard(nr, nc)) return; var target = board[nr][nc]; if (!target || target.player !== player) moves.push({ r: nr, c: nc }); }
+        function tryRay(dr, dc) { var step = 1; while (true) { var nr = r + dr * step; var nc = c + dc * step; if (!isInsideBoard(nr, nc)) break; var target = board[nr][nc]; if (!target) { moves.push({ r: nr, c: nc }); } else { if (target.player !== player) moves.push({ r: nr, c: nc }); break; } step++; } }
+        function goldMoves() { tryStep(fwd, 0); tryStep(fwd, -1); tryStep(fwd, 1); tryStep(0, -1); tryStep(0, 1); tryStep(-fwd, 0); }
+        switch (type) {
+          case 'K': for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) if (dr !== 0 || dc !== 0) tryStep(dr, dc); break;
+          case 'R': tryRay(-1,0); tryRay(1,0); tryRay(0,-1); tryRay(0,1); break;
+          case '+R': tryRay(-1,0); tryRay(1,0); tryRay(0,-1); tryRay(0,1); tryStep(-1,-1); tryStep(-1,1); tryStep(1,-1); tryStep(1,1); break;
+          case 'B': tryRay(-1,-1); tryRay(-1,1); tryRay(1,-1); tryRay(1,1); break;
+          case '+B': tryRay(-1,-1); tryRay(-1,1); tryRay(1,-1); tryRay(1,1); tryStep(-1,0); tryStep(1,0); tryStep(0,-1); tryStep(0,1); break;
+          case 'G': case '+S': case '+N': case '+L': case '+P': goldMoves(); break;
+          case 'S': tryStep(fwd,0); tryStep(fwd,-1); tryStep(fwd,1); tryStep(-fwd,-1); tryStep(-fwd,1); break;
+          case 'N': tryStep(fwd * 2, -1); tryStep(fwd * 2, 1); break;
+          case 'L': tryRay(fwd, 0); break;
+          case 'P': tryStep(fwd, 0); break;
         }
-      } catch (e) {}
-    }
-
-    function showPromoModal(type) {
-      const modal = document.getElementById('promo-modal');
-      
-      // Dados normais
-      const normalData = PIECE_DATA[type];
-      document.getElementById('promo-normal').innerHTML = renderPieceIcon(type, gameState.turn);
-      document.getElementById('promo-normal-name').textContent = normalData.nome;
-      document.getElementById('promo-normal-ability').textContent = normalData.habilidade;
-
-      // Dados promovidos
-      const promoType = '+' + type;
-      const promoData = PIECE_DATA[promoType];
-      document.getElementById('promo-evolved').innerHTML = renderPieceIcon(promoType, gameState.turn);
-      document.getElementById('promo-evolved-name').textContent = promoData.nome;
-      document.getElementById('promo-evolved-ability').textContent = promoData.habilidade;
-
-      modal.classList.add('show');
-    }
-
-    function showVictory(winner, reason) {
-      const modal = document.getElementById('victory-modal');
-      const title = document.getElementById('victory-title');
-      const desc = document.getElementById('victory-desc');
-
-      if (winner === SENTE) {
-        title.innerHTML = '🏆 Vitória do Império Solar! 🏆';
-        title.style.color = '#fbbf24';
-      } else {
-        title.innerHTML = '👑 Vitória do Império das Sombras! 👑';
-        title.style.color = '#c4b5fd';
+        return moves;
       }
-      desc.textContent = reason;
-
-      document.getElementById('stats-turns').textContent = gameState.turnCount;
-      const total = Object.values(gameState.reserves).reduce((sum, res) => {
-        return sum + Object.values(res).reduce((a, b) => a + b, 0);
-      }, 0);
-      document.getElementById('stats-captures').textContent = total + ' prisioneiros';
-
-      modal.classList.add('show');
-    }
-
-    // EVENTOS
-    document.getElementById('btn-undo').addEventListener('click', undoMove);
-    document.getElementById('btn-restart').addEventListener('click', () => {
-      if (confirm('Deseja realmente abandonar a batalha e recomeçar?')) initGame();
-    });
-
-    document.getElementById('btn-sound').addEventListener('click', function() {
-      gameState.soundOn = !gameState.soundOn;
-      this.textContent = gameState.soundOn ? '🔊' : '🔇';
-    });
-
-    document.getElementById('btn-rules').addEventListener('click', () => {
-      document.getElementById('rules-modal').classList.add('show');
-    });
-
-    document.getElementById('close-rules').addEventListener('click', () => {
-      document.getElementById('rules-modal').classList.remove('show');
-    });
-
-    document.getElementById('btn-promo-yes').addEventListener('click', () => {
-      document.getElementById('promo-modal').classList.remove('show');
-      if (gameState.pendingPromo) {
-        const p = gameState.pendingPromo;
-        executeMove(p.from, p.to, true);
+      function findKing(board, player) {
+        for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { var p = board[r][c]; if (p && p.player === player && p.type === 'K') return { r: r, c: c }; }
+        return null;
       }
-    });
-
-    document.getElementById('btn-promo-no').addEventListener('click', () => {
-      document.getElementById('promo-modal').classList.remove('show');
-      if (gameState.pendingPromo) {
-        const p = gameState.pendingPromo;
-        executeMove(p.from, p.to, false);
+      function isKingInCheck(board, player) {
+        var kingPos = findKing(board, player); if (!kingPos) return false; var enemy = 1 - player; for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { var piece = board[r][c]; if (piece && piece.player === enemy) { var attacks = getPseudoMoves(board, r, c); for (var i = 0; i < attacks.length; i++) if (attacks[i].r === kingPos.r && attacks[i].c === kingPos.c) return true; } }
+        return false;
       }
-    });
-
-    document.getElementById('btn-restart-victory').addEventListener('click', () => {
-      document.getElementById('victory-modal').classList.remove('show');
-      initGame();
-    });
-
-    // INICIAR JOGO
-    window.addEventListener('load', () => {
-      initGame();
-      resizeBoard();
-    });
-
-    window.addEventListener('resize', resizeBoard);
-
-    function resizeBoard() {
-      const board = document.getElementById('shogi-board');
-      const parent = board.parentElement;
-      const size = Math.min(parent.clientWidth, parent.clientHeight) * 0.95;
-      board.style.width = size + 'px';
-      board.style.height = size + 'px';
-    }
+      function copyObj(o) { if (!o) return null; var res = {}; for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) res[k] = o[k]; return res; }
+      function cloneReservesDict(res) { return { 'P': res['P'] || 0, 'L': res['L'] || 0, 'N': res['N'] || 0, 'S': res['S'] || 0, 'G': res['G'] || 0, 'B': res['B'] || 0, 'R': res['R'] || 0 }; }
+      function cloneBoard(b) { var copy = []; for (var r = 0; r < 9; r++) { var row = []; for (var c = 0; c < 9; c++) { var p = b[r][c]; row.push(p ? { type: p.type, player: p.player } : null); } copy.push(row); } return copy; }
+      function getLegalMovesForPiece(board, r, c) {
+        var piece = board[r][c]; if (!piece) return []; var pseudo = getPseudoMoves(board, r, c); var legal = []; for (var i = 0; i < pseudo.length; i++) { var to = pseudo[i]; var testBoard = cloneBoard(board); testBoard[to.r][to.c] = testBoard[r][c]; testBoard[r][c] = null; if (!isKingInCheck(testBoard, piece.player)) { var target = board[to.r][to.c]; var isCap = (target !== null && target.player !== piece.player); var mandatory = isMandatoryPromotion(piece.type, to.r, piece.player); var possible = canPromote(piece.type, r, to.r, piece.player); legal.push({ r: to.r, c: to.c, isCapture: isCap, promoRequired: mandatory, promoPossible: possible }); } }
+        return legal;
+      }
+      function getLegalDrops(board, pieceType, player) {
+        var drops = []; var reserves = gameState.reserves[player]; if (!reserves[pieceType] || reserves[pieceType] <= 0) return []; var forbiddenCols = {}; if (pieceType === 'P') { for (var c = 0; c < 9; c++) { for (var r = 0; r < 9; r++) { var p = board[r][c]; if (p && p.player === player && p.type === 'P') { forbiddenCols[c] = true; break; } } } }
+        for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { if (board[r][c] !== null) continue; if (pieceType === 'P' && forbiddenCols[c]) continue; if (player === SENTE) { if ((pieceType === 'P' || pieceType === 'L') && r === 0) continue; if (pieceType === 'N' && r <= 1) continue; } else { if ((pieceType === 'P' || pieceType === 'L') && r === 8) continue; if (pieceType === 'N' && r >= 7) continue; }
+          var testBoard = cloneBoard(board); testBoard[r][c] = { type: pieceType, player: player }; if (isKingInCheck(testBoard, player)) continue; if (pieceType === 'P') { var enemy = 1 - player; if (isKingInCheck(testBoard, enemy)) { if (hasAnyLegalMoves(testBoard, enemy)) { drops.push({ r: r, c: c, isDrop: true, pieceType: pieceType }); } else continue; } else { drops.push({ r: r, c: c, isDrop: true, pieceType: pieceType }); } } else { drops.push({ r: r, c: c, isDrop: true, pieceType: pieceType }); }
+        }
+        return drops;
+      }
+      function hasAnyLegalMoves(board, player) {
+        for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { var piece = board[r][c]; if (piece && piece.player === player) { var legals = getLegalMovesForPiece(board, r, c); if (legals.length > 0) return true; } }
+        var res = gameState.reserves[player]; var keys = Object.keys(res); for (var k = 0; k < keys.length; k++) { var pType = keys[k]; if (res[pType] > 0) { var d = getLegalDrops(board, pType, player); if (d.length > 0) return true; } }
+        return false;
+      }
+      function getAllLegalMoves(board, player) {
+        var allMoves = []; for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { var p = board[r][c]; if (p && p.player === player) { var m = getLegalMovesForPiece(board, r, c); for (var i = 0; i < m.length; i++) allMoves.push({ from: { r: r, c: c }, to: { r: m[i].r, c: m[i].c }, piece: p.type, isDrop: false, isCapture: m[i].isCapture, promoRequired: m[i].promoRequired, promoPossible: m[i].promoPossible }); } }
+        var res = gameState.reserves[player]; var keys = Object.keys(res); for (var k = 0; k < keys.length; k++) { var pType = keys[k]; if (res[pType] > 0) { var drops = getLegalDrops(board, pType, player); for (var d = 0; d < drops.length; d++) allMoves.push({ from: null, to: { r: drops[d].r, c: drops[d].c }, piece: pType, isDrop: true, isCapture: false, promoRequired: false, promoPossible: false }); } }
+        return allMoves;
+      }
+      function executeMove(from, to, shouldPromote) {
+        var board = gameState.board; var player = gameState.turn; var piece = board[from.r][from.c]; var target = board[to.r][to.c]; var capturedPieceType = null; saveHistoryState(); if (target) { capturedPieceType = target.type.replace('+', ''); gameState.reserves[player][capturedPieceType]++; playSound('capture'); spawnCombatParticles(to.r, to.c, 'clash'); } else { playSound('move'); spawnCombatParticles(to.r, to.c, 'dust'); }
+        var finalType = piece.type; if (shouldPromote) { finalType = '+' + piece.type.replace('+', ''); playSound('promo'); spawnCombatParticles(to.r, to.c, 'promo'); }
+        board[to.r][to.c] = { type: finalType, player: player }; board[from.r][from.c] = null; gameState.lastMove = { from: { r: from.r, c: from.c }, to: { r: to.r, c: to.c }, piece: finalType, isDrop: false, captured: capturedPieceType, promoted: shouldPromote }; recordMoveLog(player, piece.type, from, to, false, capturedPieceType, shouldPromote); endTurn();
+      }
+      function executeDrop(pieceType, to) {
+        var board = gameState.board; var player = gameState.turn; saveHistoryState(); gameState.reserves[player][pieceType]--; board[to.r][to.c] = { type: pieceType, player: player }; playSound('drop'); spawnCombatParticles(to.r, to.c, 'drop'); gameState.lastMove = { from: null, to: { r: to.r, c: to.c }, piece: pieceType, isDrop: true, captured: null, promoted: false }; recordMoveLog(player, pieceType, null, to, true, null, false); endTurn();
+      }
+      function endTurn() {
+        gameState.selectedSquare = null; gameState.selectedDrop = null; gameState.validMoves = []; var nextPlayer = 1 - gameState.turn; gameState.turn = nextPlayer; if (nextPlayer === SENTE) gameState.turnCount++; var inCheck = isKingInCheck(gameState.board, nextPlayer); var hasMoves = hasAnyLegalMoves(gameState.board, nextPlayer); if (inCheck && !hasMoves) { gameState.gameOver = true; playSound('victory'); var victor = 1 - nextPlayer; showVictoryModal(victor, 'xeque-mate'); } else if (!inCheck && !hasMoves) { gameState.gameOver = true; showVictoryModal(-1, 'impasse'); } else if (inCheck) { playSound('check'); }
+        updateUI(); if (!gameState.gameOver && gameState.gameMode === 'pve' && gameState.turn === GOTE) { document.getElementById('game-status-text').textContent = 'O Império das Sombras está tramando...'; setTimeout(function() { triggerAIMove(); }, 350); }
+      }
+      function formatSquareName(r, c) { var file = 9 - c; var rankNames = ['a','b','c','d','e','f','g','h','i']; return file + rankNames[r]; }
+      function recordMoveLog(player, pieceType, from, to, isDrop, captured, promoted) {
+        var prefix = (player === SENTE) ? '▲ ' : '▼ '; var pName = PIECE_NAMES[pieceType] ? PIECE_NAMES[pieceType].name : pieceType; var toStr = formatSquareName(to.r, to.c); var moveText = ''; if (isDrop) { moveText = prefix + pName + ' invocada em ' + toStr; } else { var fromStr = formatSquareName(from.r, from.c); moveText = prefix + pName + ' de ' + fromStr + ' para ' + toStr; if (captured) { var capName = PIECE_NAMES[captured] ? PIECE_NAMES[captured].name : captured; moveText += ' [Capturou ' + capName + ']'; } if (promoted) moveText += ' ✦ PROMOVIDO!'; }
+        logHistoryEntry(moveText, player);
+      }
+      function logHistoryEntry(text, player) {
+        var container = document.getElementById('move-history'); var entry = document.createElement('div'); entry.className = 'history-entry'; if (player === SENTE) entry.classList.add('sente-move'); if (player === GOTE) entry.classList.add('gote-move'); entry.textContent = text; container.insertBefore(entry, container.firstChild);
+      }
+      var undoStack = [];
+      function saveHistoryState() { var stateSnapshot = { board: cloneBoard(gameState.board), turn: gameState.turn, reserves: { 0: cloneReservesDict(gameState.reserves[0]), 1: cloneReservesDict(gameState.reserves[1]) }, turnCount: gameState.turnCount, lastMove: gameState.lastMove ? copyObj(gameState.lastMove) : null }; undoStack.push(stateSnapshot); if (undoStack.length > 40) undoStack.shift(); }
+      function undoMove() { if (undoStack.length === 0 || gameState.gameOver) return; var stepsToUndo = (gameState.gameMode === 'pve' && gameState.turn === SENTE && undoStack.length >= 2) ? 2 : 1; while (stepsToUndo > 0 && undoStack.length > 0) { var prev = undoStack.pop(); gameState.board = prev.board; gameState.turn = prev.turn; gameState.reserves = prev.reserves; gameState.turnCount = prev.turnCount; gameState.lastMove = prev.lastMove; stepsToUndo--; } gameState.selectedSquare = null; gameState.selectedDrop = null; gameState.validMoves = []; logHistoryEntry('Jogada desfeita pelos generais.'); updateUI(); }
+      function evaluateBoard(board, reserves) {
+        var score = 0; for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { var piece = board[r][c]; if (piece) { var val = PIECE_VALUES[piece.type] || 100; var centerBonus = 4 - Math.abs(r - 4) + (4 - Math.abs(c - 4)); val += centerBonus * 6; if (piece.player === GOTE) score += val; else score -= val; } }
+        var keys = ['P','L','N','S','G','B','R']; for (var i = 0; i < keys.length; i++) { var k = keys[i]; score += (reserves[GOTE][k] || 0) * (DROP_VALUES[k] || 100); score -= (reserves[SENTE][k] || 0) * (DROP_VALUES[k] || 100); }
+        return score;
+      }
+      function minimax(board, reserves, depth, alpha, beta, isMaximizing) {
+        var player = isMaximizing ? GOTE : SENTE; var inCheck = isKingInCheck(board, player); if (depth === 0) return evaluateBoard(board, reserves); var moves = getAllLegalMoves(board, player); if (moves.length === 0) { if (inCheck) return isMaximizing ? -50000 : 50000; return 0; }
+        moves.sort(function(a, b) { var scoreA = (a.isCapture ? 200 : 0) + (a.promoPossible ? 100 : 0); var scoreB = (b.isCapture ? 200 : 0) + (b.promoPossible ? 100 : 0); return scoreB - scoreA; }); var maxBranch = (depth >= 2) ? 14 : 25; if (moves.length > maxBranch) moves = moves.slice(0, maxBranch);
+        if (isMaximizing) { var maxEval = -Infinity; for (var i = 0; i < moves.length; i++) { var m = moves[i]; var nextBoard = cloneBoard(board); var nextReserves = { 0: cloneReservesDict(reserves[0]), 1: cloneReservesDict(reserves[1]) }; if (m.isDrop) { nextReserves[GOTE][m.piece]--; nextBoard[m.to.r][m.to.c] = { type: m.piece, player: GOTE }; } else { var target = nextBoard[m.to.r][m.to.c]; if (target) nextReserves[GOTE][target.type.replace('+', '')]++; var pType = m.piece; if (m.promoRequired || (m.promoPossible && Math.random() < 0.9)) pType = '+' + pType.replace('+', ''); nextBoard[m.to.r][m.to.c] = { type: pType, player: GOTE }; nextBoard[m.from.r][m.from.c] = null; } var evalVal = minimax(nextBoard, nextReserves, depth - 1, alpha, beta, false); if (evalVal > maxEval) maxEval = evalVal; if (evalVal > alpha) alpha = evalVal; if (beta <= alpha) break; } return maxEval; } else { var minEval = Infinity; for (var j = 0; j < moves.length; j++) { var mv = moves[j]; var nBoard = cloneBoard(board); var nReserves = { 0: cloneReservesDict(reserves[0]), 1: cloneReservesDict(reserves[1]) }; if (mv.isDrop) { nReserves[SENTE][mv.piece]--; nBoard[mv.to.r][mv.to.c] = { type: mv.piece, player: SENTE }; } else { var tgt = nBoard[mv.to.r][mv.to.c]; if (tgt) nReserves[SENTE][tgt.type.replace('+', '')]++; var pieceT = mv.piece; if (mv.promoRequired || mv.promoPossible) pieceT = '+' + pieceT.replace('+', ''); nBoard[mv.to.r][mv.to.c] = { type: pieceT, player: SENTE }; nBoard[mv.from.r][mv.from.c] = null; } var ev = minimax(nBoard, nReserves, depth - 1, alpha, beta, true); if (ev < minEval) minEval = ev; if (ev < beta) beta = ev; if (beta <= alpha) break; } return minEval; }
+      }
+      function triggerAIMove() {
+        if (gameState.gameOver || gameState.turn !== GOTE) return; var legalMoves = getAllLegalMoves(gameState.board, GOTE); if (legalMoves.length === 0) return; var depth = 1; if (gameState.aiDifficulty === 'med') depth = 2; if (gameState.aiDifficulty === 'hard') depth = 3; var bestMove = null; var bestScore = -Infinity; legalMoves.sort(function() { return 0.5 - Math.random(); }); for (var i = 0; i < legalMoves.length; i++) { var m = legalMoves[i]; var testBoard = cloneBoard(gameState.board); var testReserves = { 0: cloneReservesDict(gameState.reserves[0]), 1: cloneReservesDict(gameState.reserves[1]) }; if (m.isDrop) { testReserves[GOTE][m.piece]--; testBoard[m.to.r][m.to.c] = { type: m.piece, player: GOTE }; } else { var tgt = testBoard[m.to.r][m.to.c]; if (tgt) testReserves[GOTE][tgt.type.replace('+', '')]++; var pType = m.piece; if (m.promoRequired || (m.promoPossible && Math.random() < 0.95)) pType = '+' + pType.replace('+', ''); testBoard[m.to.r][m.to.c] = { type: pType, player: GOTE }; testBoard[m.from.r][m.from.c] = null; } var score = minimax(testBoard, testReserves, depth - 1, -Infinity, Infinity, false); if (score > bestScore) { bestScore = score; bestMove = m; } }
+        if (bestMove) { if (bestMove.isDrop) executeDrop(bestMove.piece, bestMove.to); else { var shouldProm = bestMove.promoRequired || (bestMove.promoPossible && bestMove.piece.indexOf('+') === -1); executeMove(bestMove.from, bestMove.to, shouldProm); } }
+      }
+      function onTileClick(row, col) {
+        if (gameState.gameOver) return; if (gameState.gameMode === 'pve' && gameState.turn === GOTE) return; var board = gameState.board; var currentPiece = board[row][col]; var player = gameState.turn; if (gameState.selectedDrop) { var validDropMove = null; for (var d = 0; d < gameState.validMoves.length; d++) if (gameState.validMoves[d].r === row && gameState.validMoves[d].c === col) { validDropMove = gameState.validMoves[d]; break; } if (validDropMove) { var pieceToDrop = gameState.selectedDrop.pieceType; executeDrop(pieceToDrop, { r: row, c: col }); return; } else { gameState.selectedDrop = null; gameState.validMoves = []; } }
+        if (gameState.selectedSquare) { var from = gameState.selectedSquare; if (from.r === row && from.c === col) { gameState.selectedSquare = null; gameState.validMoves = []; updateUI(); return; } var chosenMove = null; for (var i = 0; i < gameState.validMoves.length; i++) if (gameState.validMoves[i].r === row && gameState.validMoves[i].c === col) { chosenMove = gameState.validMoves[i]; break; } if (chosenMove) { var movingPiece = board[from.r][from.c]; if (chosenMove.promoRequired) executeMove(from, { r: row, c: col }, true); else if (chosenMove.promoPossible && movingPiece.type.indexOf('+') === -1) { promptPromotionDecision(from, { r: row, c: col }, movingPiece.type); } else { executeMove(from, { r: row, c: col }, false); } return; } }
+        if (currentPiece && currentPiece.player === player) { gameState.selectedSquare = { r: row, c: col }; gameState.selectedDrop = null; gameState.validMoves = getLegalMovesForPiece(board, row, col); playSound('move'); updateUI(); } else { gameState.selectedSquare = null; gameState.validMoves = []; updateUI(); }
+      }
+      function onReservePieceClick(pieceType, player) {
+        if (gameState.gameOver) return; if (gameState.gameMode === 'pve' && gameState.turn === GOTE) return; if (player !== gameState.turn) return; if (gameState.selectedDrop && gameState.selectedDrop.pieceType === pieceType) { gameState.selectedDrop = null; gameState.validMoves = []; } else { gameState.selectedSquare = null; gameState.selectedDrop = { pieceType: pieceType, player: player }; gameState.validMoves = getLegalDrops(gameState.board, pieceType, player); playSound('move'); }
+        updateUI();
+      }
+      function promptPromotionDecision(from, to, rawPieceType) { gameState.pendingPromotion = { from: from, to: to, pieceType: rawPieceType }; var modal = document.getElementById('promo-modal'); var normalBox = document.getElementById('promo-normal-preview'); var promoBox = document.getElementById('promo-promoted-preview'); normalBox.innerHTML = renderPieceSvg(rawPieceType, gameState.turn, false) + '<span>Manter ' + (PIECE_NAMES[rawPieceType] ? PIECE_NAMES[rawPieceType].name : '') + '</span>'; promoBox.innerHTML = renderPieceSvg('+' + rawPieceType, gameState.turn, true) + '<span>Evoluir para ' + (PIECE_NAMES['+' + rawPieceType] ? PIECE_NAMES['+' + rawPieceType].name : '') + '</span>'; modal.classList.add('show'); }
+      function renderBoardDOM() {
+        var boardEl = document.getElementById('shogi-board'); boardEl.innerHTML = ''; var inCheck = isKingInCheck(gameState.board, gameState.turn); var kingPos = inCheck ? findKing(gameState.board, gameState.turn) : null; for (var r = 0; r < 9; r++) for (var c = 0; c < 9; c++) { var tile = document.createElement('div'); tile.className = 'tile'; tile.setAttribute('data-row', r); tile.setAttribute('data-col', c); if (r <= 2) tile.classList.add('zone-gote'); if (r >= 6) tile.classList.add('zone-sente'); if (gameState.selectedSquare && gameState.selectedSquare.r === r && gameState.selectedSquare.c === c) tile.classList.add('selected'); if (gameState.lastMove) { if (gameState.lastMove.from && gameState.lastMove.from.r === r && gameState.lastMove.from.c === c) tile.classList.add('last-move-src'); if (gameState.lastMove.to.r === r && gameState.lastMove.to.c === c) tile.classList.add('last-move-dst'); }
+          if (gameState.showHints && gameState.validMoves) { for (var v = 0; v < gameState.validMoves.length; v++) { var vm = gameState.validMoves[v]; if (vm.r === r && vm.c === c) { if (vm.isDrop) tile.classList.add('valid-drop'); else if (vm.isCapture) tile.classList.add('valid-capture'); else tile.classList.add('valid-move'); break; } } }
+          if (kingPos && kingPos.r === r && kingPos.c === c) tile.classList.add('in-check'); var piece = gameState.board[r][c]; if (piece) { var pEl = document.createElement('div'); pEl.className = 'shogi-piece ' + (piece.player === SENTE ? 'player-sente' : 'player-gote'); var isProm = piece.type.indexOf('+') !== -1; if (isProm) pEl.classList.add('promoted'); pEl.innerHTML = renderPieceSvg(piece.type, piece.player, isProm); tile.appendChild(pEl); }
+          (function(rowIdx, colIdx) { tile.addEventListener('click', function(e) { e.preventDefault(); onTileClick(rowIdx, colIdx); }); })(r, c);
+          boardEl.appendChild(tile);
+        }
+      }
+      function renderReservesDOM() {
+        var senteSlots = document.getElementById('sente-slots'); var goteSlots = document.getElementById('gote-slots'); senteSlots.innerHTML = ''; goteSlots.innerHTML = ''; var pieceOrder = ['R', 'B', 'G', 'S', 'N', 'L', 'P']; var senteTotal = 0; var goteTotal = 0; for (var i = 0; i < pieceOrder.length; i++) { var type = pieceOrder[i]; var count = gameState.reserves[SENTE][type] || 0; if (count > 0) { senteTotal += count; var card = createReserveCard(type, count, SENTE); senteSlots.appendChild(card); } }
+        if (senteTotal === 0) senteSlots.innerHTML = '<span style="font-size:0.65rem; color:#64748b; padding:8px;">Arsenal vazio</span>';
+        for (var j = 0; j < pieceOrder.length; j++) { var gType = pieceOrder[j]; var gCount = gameState.reserves[GOTE][gType] || 0; if (gCount > 0) { goteTotal += gCount; var gCard = createReserveCard(gType, gCount, GOTE); goteSlots.appendChild(gCard); } }
+        if (goteTotal === 0) goteSlots.innerHTML = '<span style="font-size:0.65rem; color:#64748b; padding:8px;">Arsenal vazio</span>';
+        document.getElementById('sente-captured-count').textContent = senteTotal + ' sob custódia'; document.getElementById('gote-captured-count').textContent = goteTotal + ' sob custódia';
+      }
+      function createReserveCard(type, count, player) {
+        var card = document.createElement('div'); card.className = 'reserve-piece-card'; if (gameState.selectedDrop && gameState.selectedDrop.pieceType === type && gameState.selectedDrop.player === player) card.classList.add('active-drop'); card.innerHTML = renderPieceSvg(type, player, false); if (count > 1) { var pill = document.createElement('div'); pill.className = 'count-pill'; pill.textContent = count; card.appendChild(pill); }
+        card.addEventListener('click', function(e) { e.preventDefault(); onReservePieceClick(type, player); }); return card;
+      }
+      function updateStatusBanner() {
+        var badge = document.getElementById('army-badge'); var nameSpan = document.getElementById('army-name'); var msgSpan = document.getElementById('game-status-text'); if (gameState.turn === SENTE) { badge.className = 'army-badge solar'; nameSpan.textContent = 'Império Solar (Alvorada)'; } else { badge.className = 'army-badge shadow'; nameSpan.textContent = 'Império das Sombras (Vazio)'; }
+        var inCheck = isKingInCheck(gameState.board, gameState.turn); if (gameState.gameOver) { msgSpan.textContent = 'Batalha concluída!'; msgSpan.className = 'game-message'; } else if (inCheck) { msgSpan.textContent = '⚠️ ALERTA: COMANDANTE EM XEQUE!'; msgSpan.className = 'game-message check-alert'; } else { msgSpan.textContent = 'Turno ' + gameState.turnCount + ' - Ordens prontas'; msgSpan.className = 'game-message'; }
+      }
+      function updateUI() { renderBoardDOM(); renderReservesDOM(); updateStatusBanner(); }
+      var canvas = document.getElementById('effect-canvas'); var ctx2d = canvas ? canvas.getContext('2d') : null; var particles = [];
+      function resizeEffectCanvas() { if (!canvas) return; var rect = canvas.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
+      window.addEventListener('resize', resizeEffectCanvas);
+      function spawnCombatParticles(row, col, effectType) { if (!canvas || !ctx2d) return; var tileSize = canvas.width / 9; var cx = (col + 0.5) * tileSize; var cy = (row + 0.5) * tileSize; var count = (effectType === 'clash') ? 22 : 12; for (var i = 0; i < count; i++) { var angle = Math.random() * Math.PI * 2; var speed = 1.5 + Math.random() * 4.5; var color = '#fbbf24'; if (effectType === 'clash') color = (Math.random() < 0.5) ? '#ef4444' : '#f59e0b'; else if (effectType === 'promo') { color = (Math.random() < 0.5) ? '#38bdf8' : '#fbbf24'; speed *= 1.3; } else if (effectType === 'drop') color = '#a855f7'; particles.push({ x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, alpha: 1.0, radius: 2 + Math.random() * 3, color: color, life: 0.04 + Math.random() * 0.04 }); } }
+      function updateAndRenderParticles() { if (!ctx2d || !canvas) return; ctx2d.clearRect(0, 0, canvas.width, canvas.height); for (var i = particles.length - 1; i >= 0; i--) { var p = particles[i]; p.x += p.vx; p.y += p.vy; p.alpha -= p.life; if (p.alpha <= 0) { particles.splice(i, 1); continue; } ctx2d.save(); ctx2d.globalAlpha = p.alpha; ctx2d.fillStyle = p.color; ctx2d.beginPath(); ctx2d.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx2d.fill(); ctx2d.restore(); } requestAnimationFrame(updateAndRenderParticles); }
+      function setupModals() {
+        document.getElementById('btn-promo-yes').addEventListener('click', function() { var modal = document.getElementById('promo-modal'); modal.classList.remove('show'); if (gameState.pendingPromotion) { var p = gameState.pendingPromotion; gameState.pendingPromotion = null; executeMove(p.from, p.to, true); } });
+        document.getElementById('btn-promo-no').addEventListener('click', function() { var modal = document.getElementById('promo-modal'); modal.classList.remove('show'); if (gameState.pendingPromotion) { var p = gameState.pendingPromotion; gameState.pendingPromotion = null; executeMove(p.from, p.to, false); } });
+        document.getElementById('btn-rules').addEventListener('click', function() { document.getElementById('rules-modal').classList.add('show'); });
+        document.getElementById('btn-settings').addEventListener('click', function() { document.getElementById('settings-modal').classList.add('show'); });
+        var closeButtons = document.querySelectorAll('[data-close]'); for (var i = 0; i < closeButtons.length; i++) { closeButtons[i].addEventListener('click', function() { var targetId = this.getAttribute('data-close'); var el = document.getElementById(targetId); if (el) el.classList.remove('show'); }); }
+        document.getElementById('btn-victory-restart').addEventListener('click', function() { document.getElementById('victory-modal').classList.remove('show'); initGame(); });
+        document.getElementById('btn-restart').addEventListener('click', function() { if (confirm('Deseja realmente abandonar a batalha atual e reiniciar a guerra?')) initGame(); });
+        document.getElementById('btn-undo').addEventListener('click', function() { undoMove(); });
+        var btnSound = document.getElementById('btn-sound-toggle'); var iconOn = document.getElementById('sound-icon-on'); var iconOff = document.getElementById('sound-icon-off'); function updateSoundIcons() { if (soundEnabled) { iconOn.style.display = 'block'; iconOff.style.display = 'none'; } else { iconOn.style.display = 'none'; iconOff.style.display = 'block'; } document.getElementById('opt-sound-enabled').checked = soundEnabled; }
+        btnSound.addEventListener('click', function() { soundEnabled = !soundEnabled; updateSoundIcons(); if (soundEnabled) playSound('move'); });
+        document.getElementById('opt-sound-enabled').addEventListener('change', function() { soundEnabled = this.checked; updateSoundIcons(); });
+        document.getElementById('opt-game-mode').addEventListener('change', function() { gameState.gameMode = this.value; logHistoryEntry('Modo alterado para: ' + (this.value === 'pve' ? 'Jogador vs Computador' : '2 Jogadores')); });
+        document.getElementById('opt-ai-diff').addEventListener('change', function() { gameState.aiDifficulty = this.value; });
+        document.getElementById('opt-show-hints').addEventListener('change', function() { gameState.showHints = this.checked; updateUI(); });
+      }
+      function showVictoryModal(victor, reason) {
+        var modal = document.getElementById('victory-modal'); var headline = document.getElementById('victory-headline'); var desc = document.getElementById('victory-desc'); if (victor === SENTE) { headline.className = 'victory-title solar-win'; headline.textContent = 'Vitória da Alvorada!'; desc.textContent = 'O Império Solar prevaleceu com glória militar absoluta!'; } else if (victor === GOTE) { headline.className = 'victory-title shadow-win'; headline.textContent = 'Vitória das Sombras!'; desc.textContent = 'O Vazio engoliu o Comandante Real em xeque-mate impiedoso.'; } else { headline.className = 'victory-title'; headline.textContent = 'Guerra em impasse'; desc.textContent = 'Nenhum dos comandantes possui ordens legais disponíveis.'; }
+        document.getElementById('stats-turns').textContent = gameState.turnCount; var totalCap = 0; var pieceKeys = ['P','L','N','S','G','B','R']; for (var pk = 0; pk < pieceKeys.length; pk++) totalCap += (gameState.reserves[0][pieceKeys[pk]] || 0) + (gameState.reserves[1][pieceKeys[pk]] || 0); document.getElementById('stats-captures').textContent = totalCap + ' prisioneiros'; document.getElementById('stats-mode').textContent = (gameState.gameMode === 'pve') ? 'Jogador vs IA' : '2 jogadores local'; modal.classList.add('show');
+      }
+      window.addEventListener('DOMContentLoaded', function() { setupModals(); initGame(); resizeEffectCanvas(); requestAnimationFrame(updateAndRenderParticles); var unlockAudio = function() { getAudioContext(); window.removeEventListener('touchstart', unlockAudio); window.removeEventListener('click', unlockAudio); }; window.addEventListener('touchstart', unlockAudio, { passive: true }); window.addEventListener('click', unlockAudio); });
+    })();
   </script>
 </body>
 </html>
