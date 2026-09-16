@@ -288,6 +288,7 @@
       align-items: center;
       justify-content: center;
       filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+      position: relative;
     }
 
     .shogi-piece.player-gote {
@@ -295,12 +296,35 @@
     }
 
     .shogi-piece.promoted {
-      filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+      filter: drop-shadow(0 0 6px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+      animation: promoteGlow 2s infinite ease-in-out;
+    }
+
+    @keyframes promoteGlow {
+      0%, 100% { filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
+      50% { filter: drop-shadow(0 0 10px #fbbf24) drop-shadow(0 0 8px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
     }
 
     .shogi-piece svg {
       width: 100%;
       height: 100%;
+    }
+
+    .piece-tooltip {
+      position: absolute;
+      background: #1f2937;
+      border: 1px solid #f59e0b;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 0.65rem;
+      color: #fcd34d;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 50;
+      bottom: 105%;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
 
     .action-bar {
@@ -392,27 +416,42 @@
       justify-content: center;
       gap: 16px;
       margin: 12px 0;
+      flex-wrap: wrap;
     }
 
     .promo-card {
       background: #1f2937;
-      border: 1px solid #4b5563;
-      border-radius: 6px;
-      padding: 8px;
-      width: 90px;
+      border: 2px solid #4b5563;
+      border-radius: 8px;
+      padding: 12px;
+      width: 110px;
       text-align: center;
       font-size: 0.7rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
 
     .promo-card.promoted {
       border-color: #f59e0b;
-      box-shadow: 0 0 10px rgba(245,158,11,0.4);
+      box-shadow: 0 0 15px rgba(245,158,11,0.6), inset 0 0 10px rgba(245,158,11,0.2);
+      background: linear-gradient(135deg, #2d2211, #1f2937);
     }
 
     .promo-card svg {
-      width: 45px;
-      height: 45px;
+      width: 50px;
+      height: 50px;
+      margin-bottom: 6px;
+    }
+
+    .promo-card .name {
+      font-weight: 800;
       margin-bottom: 4px;
+      color: #fcd34d;
+    }
+
+    .promo-card .ability {
+      font-size: 0.6rem;
+      color: #cbd5e1;
+      line-height: 1.3;
     }
 
     .history-drawer {
@@ -483,18 +522,26 @@
   <!-- MODAIS -->
   <div class="modal-backdrop" id="promo-modal">
     <div class="modal-window">
-      <div class="modal-header">Evolução de Batalha</div>
+      <div class="modal-header">⚡ Evolução de Batalha ⚡</div>
       <div class="modal-body">
-        <p style="margin-bottom: 12px;">Sua unidade atingiu o território inimigo!</p>
+        <p style="margin-bottom: 12px; text-align: center; font-weight: 600;">Sua unidade atingiu o território inimigo!</p>
         <div class="promo-preview">
-          <div class="promo-card" id="promo-normal"></div>
-          <div style="display: flex; align-items: center;">➜</div>
-          <div class="promo-card promoted" id="promo-evolved"></div>
+          <div class="promo-card" id="promo-normal">
+            <div style="height: 50px; display: flex; align-items: center; justify-content: center;"></div>
+            <div class="name" id="promo-normal-name"></div>
+            <div class="ability" id="promo-normal-ability"></div>
+          </div>
+          <div style="display: flex; align-items: center; font-size: 1.5rem; font-weight: bold;">➜</div>
+          <div class="promo-card promoted" id="promo-evolved">
+            <div style="height: 50px; display: flex; align-items: center; justify-content: center;"></div>
+            <div class="name" id="promo-evolved-name"></div>
+            <div class="ability" id="promo-evolved-ability"></div>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn" id="btn-promo-no" style="flex: 1;">Não</button>
-        <button class="btn btn-primary" id="btn-promo-yes" style="flex: 1;">Sim</button>
+        <button class="btn" id="btn-promo-no" style="flex: 1;">Não Promover</button>
+        <button class="btn btn-primary" id="btn-promo-yes" style="flex: 1;">Promover ⬆️</button>
       </div>
     </div>
   </div>
@@ -517,14 +564,14 @@
 
   <div class="modal-backdrop" id="rules-modal">
     <div class="modal-window">
-      <div class="modal-header">Regras do Shogi</div>
+      <div class="modal-header">📚 Regras do Shogi</div>
       <div class="modal-body">
-        <h4 style="color: #f59e0b; margin: 8px 0;">Objetivo</h4>
+        <h4 style="color: #f59e0b; margin: 8px 0;">🎯 Objetivo</h4>
         <p>Capture o Rei inimigo em Xeque-Mate!</p>
-        <h4 style="color: #f59e0b; margin: 8px 0;">Peças Capturadas</h4>
+        <h4 style="color: #f59e0b; margin: 8px 0;">⚔️ Peças Capturadas</h4>
         <p>Peças capturadas viram suas e podem ser "invocadas" em casas vazias!</p>
-        <h4 style="color: #f59e0b; margin: 8px 0;">Promoção</h4>
-        <p>Ao entrar nas 3 fileiras inimigas, peças podem evoluir!</p>
+        <h4 style="color: #f59e0b; margin: 8px 0;">⭐ Promoção</h4>
+        <p>Ao entrar nas 3 fileiras inimigas, peças podem evoluir para formas mais poderosas!</p>
       </div>
       <div class="modal-footer">
         <button class="btn" id="close-rules" style="flex: 1;">Fechar</button>
@@ -538,8 +585,21 @@
     const SENTE = 0;
     const GOTE = 1;
 
-    const PIECE_NAMES = {
-      K: '玉', R: '飛', B: '角', G: '金', S: '銀', N: '桂', L: '香', P: '歩'
+    const PIECE_DATA = {
+      K: { nome: 'Comandante Supremo', kanji: '玉', brasao: '♔', habilidade: 'Move 1 casa em qualquer direção' },
+      R: { nome: 'Balista de Cerco', kanji: '飛', brasao: '♜', habilidade: 'Move ilimitado em linhas' },
+      '+R': { nome: 'Titã de Guerra', kanji: '龍', brasao: '🐉', habilidade: 'Linhas + 1 diagonal' },
+      B: { nome: 'Místico da Luz', kanji: '角', brasao: '♝', habilidade: 'Move ilimitado na diagonal' },
+      '+B': { nome: 'Pegasus Celestial', kanji: '馬', brasao: '🦅', habilidade: 'Diagonal + 1 ortogonal' },
+      G: { nome: 'Guarda Dourada', kanji: '金', brasao: '⬡', habilidade: 'Move 1 casa (6 direções)' },
+      S: { nome: 'Espadachim de Prata', kanji: '銀', brasao: '◈', habilidade: 'Move 1 casa (5 direções)' },
+      '+S': { nome: 'Mestre da Guarda', kanji: '成銀', brasao: '✦', habilidade: 'Mesma mobilidade do Ouro' },
+      N: { nome: 'Cavalaria de Assalto', kanji: '桂', brasao: '♞', habilidade: 'Salta (2 frente, 1 lado)' },
+      '+N': { nome: 'Cavaleiro Alado', kanji: '成桂', brasao: '✦', habilidade: 'Mesma mobilidade do Ouro' },
+      L: { nome: 'Falange de Lanças', kanji: '香', brasao: '▲', habilidade: 'Avança ilimitado' },
+      '+L': { nome: 'Lança Veterana', kanji: '成香', brasao: '✦', habilidade: 'Mesma mobilidade do Ouro' },
+      P: { nome: 'Infantaria', kanji: '歩', brasao: '●', habilidade: 'Avança 1 casa' },
+      '+P': { nome: 'Soldado de Elite', kanji: 'と', brasao: '★', habilidade: 'Mesma mobilidade do Ouro' }
     };
 
     let gameState = {
@@ -580,7 +640,7 @@
       }
 
       updateUI();
-      logMove('Batalha iniciada!');
+      logMove('⚔️ Batalha iniciada! Império Solar move primeiro.');
     }
 
     function createBoard() {
@@ -682,8 +742,16 @@
         case 'R':
           tryRay(-1, 0); tryRay(1, 0); tryRay(0, -1); tryRay(0, 1);
           break;
+        case '+R':
+          tryRay(-1, 0); tryRay(1, 0); tryRay(0, -1); tryRay(0, 1);
+          tryStep(-1, -1); tryStep(-1, 1); tryStep(1, -1); tryStep(1, 1);
+          break;
         case 'B':
           tryRay(-1, -1); tryRay(-1, 1); tryRay(1, -1); tryRay(1, 1);
+          break;
+        case '+B':
+          tryRay(-1, -1); tryRay(-1, 1); tryRay(1, -1); tryRay(1, 1);
+          tryStep(-1, 0); tryStep(1, 0); tryStep(0, -1); tryStep(0, 1);
           break;
         case 'G':
         case '+S': case '+N': case '+L': case '+P':
@@ -828,7 +896,7 @@
       if (!hasMove) {
         gameState.gameOver = true;
         const winner = 1 - gameState.turn;
-        showVictory(winner, inCheck ? 'Xeque-Mate!' : 'Impasse!');
+        showVictory(winner, inCheck ? 'Xeque-Mate Conquistado!' : 'Impasse na Batalha!');
       } else if (inCheck) {
         playSound('check');
       }
@@ -893,7 +961,7 @@
       gameState.turnCount = state.turnCount;
       gameState.selected = null;
       gameState.validMoves = [];
-      logMove('Movimento desfeito.');
+      logMove('↶ Movimento desfeito pelos generais.');
       updateUI();
     }
 
@@ -938,7 +1006,15 @@
             p.className = 'shogi-piece';
             if (piece.player === GOTE) p.classList.add('player-gote');
             if (piece.type.startsWith('+')) p.classList.add('promoted');
+            
             p.innerHTML = renderPieceIcon(piece.type, piece.player);
+            
+            // Tooltip com nome em português
+            const tooltip = document.createElement('div');
+            tooltip.className = 'piece-tooltip';
+            tooltip.textContent = PIECE_DATA[piece.type].nome;
+            p.appendChild(tooltip);
+            
             tile.appendChild(p);
           }
 
@@ -949,13 +1025,41 @@
     }
 
     function renderPieceIcon(type, player) {
-      const colors = player === SENTE 
-        ? { main: '#f59e0b', dark: '#78350f' }
-        : { main: '#a855f7', dark: '#3b0764' };
+      const isSolar = player === SENTE;
+      const baseColor = isSolar ? '#f59e0b' : '#a855f7';
+      const darkColor = isSolar ? '#78350f' : '#3b0764';
+      const isPromoted = type.startsWith('+');
+      const brasao = PIECE_DATA[type].brasao;
 
+      // SVG com design premium e brasão
       return `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="50,5 85,35 80,115 20,115 15,35" fill="${colors.main}" stroke="${colors.dark}" stroke-width="2"/>
-        <text x="50" y="90" font-size="35" font-weight="bold" text-anchor="middle" fill="${colors.dark}">${PIECE_NAMES[type.replace('+', '')]}</text>
+        <defs>
+          <linearGradient id="pieceGrad${type}${player}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${isPromoted ? '#fbbf24' : '#fffbeb'}"/>
+            <stop offset="50%" stop-color="${baseColor}"/>
+            <stop offset="100%" stop-color="${darkColor}"/>
+          </linearGradient>
+          <filter id="shadow${type}${player}">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.8" flood-color="#000000"/>
+          </filter>
+        </defs>
+        
+        <!-- Base da peça com relevo -->
+        <polygon points="50,5 85,35 80,115 20,115 15,35" fill="url(#pieceGrad${type}${player})" stroke="${darkColor}" stroke-width="2.5" filter="url(#shadow${type}${player})" />
+        
+        <!-- Brilho interno -->
+        <polygon points="50,10 80,35 75,110 25,110 20,35" fill="none" stroke="${isPromoted ? '#fef08a' : '#ffffff'}" stroke-width="1" opacity="0.4" />
+        
+        <!-- Decoração promocional -->
+        ${isPromoted ? `<circle cx="50" cy="25" r="4" fill="#ff6b6b" opacity="0.6" />
+        <circle cx="38" cy="40" r="2" fill="#fbbf24" />
+        <circle cx="62" cy="40" r="2" fill="#fbbf24" />` : ''}
+        
+        <!-- BRASÃO NO TOPO -->
+        <text x="50" y="35" font-size="20" text-anchor="middle" fill="${isPromoted ? '#fbbf24' : baseColor}" opacity="0.9">${brasao}</text>
+        
+        <!-- Texto Kanji em baixo -->
+        <text x="50" y="90" font-family="serif" font-size="38" font-weight="bold" text-anchor="middle" fill="${darkColor}" stroke="${isPromoted ? '#fbbf24' : '#ffffff'}" stroke-width="0.5">${PIECE_DATA[type].kanji}</text>
       </svg>`;
     }
 
@@ -988,6 +1092,13 @@
       }
 
       card.innerHTML = renderPieceIcon(type, player);
+      
+      // Tooltip no arsenal também
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.width = '100%';
+      wrapper.style.height = '100%';
+      
       if (count > 1) {
         const pill = document.createElement('div');
         pill.className = 'count-pill';
@@ -1032,7 +1143,7 @@
       const inCheck = isInCheck(gameState.board, gameState.turn);
       if (inCheck) {
         status.className = 'game-message alert';
-        status.textContent = '⚠️ XEQUE!';
+        status.textContent = '⚠️ XEQUE! Rei sob ataque!';
       } else {
         status.className = 'game-message';
         status.textContent = `Turno ${gameState.turnCount}`;
@@ -1082,11 +1193,19 @@
 
     function showPromoModal(type) {
       const modal = document.getElementById('promo-modal');
-      const normal = document.getElementById('promo-normal');
-      const evolved = document.getElementById('promo-evolved');
+      
+      // Dados normais
+      const normalData = PIECE_DATA[type];
+      document.getElementById('promo-normal').innerHTML = renderPieceIcon(type, gameState.turn);
+      document.getElementById('promo-normal-name').textContent = normalData.nome;
+      document.getElementById('promo-normal-ability').textContent = normalData.habilidade;
 
-      normal.innerHTML = `${renderPieceIcon(type, gameState.turn)}<div>${PIECE_NAMES[type]}</div>`;
-      evolved.innerHTML = `${renderPieceIcon('+' + type, gameState.turn)}<div>+${PIECE_NAMES[type]}</div>`;
+      // Dados promovidos
+      const promoType = '+' + type;
+      const promoData = PIECE_DATA[promoType];
+      document.getElementById('promo-evolved').innerHTML = renderPieceIcon(promoType, gameState.turn);
+      document.getElementById('promo-evolved-name').textContent = promoData.nome;
+      document.getElementById('promo-evolved-ability').textContent = promoData.habilidade;
 
       modal.classList.add('show');
     }
@@ -1096,14 +1215,20 @@
       const title = document.getElementById('victory-title');
       const desc = document.getElementById('victory-desc');
 
-      title.textContent = winner === SENTE ? '🏆 Vitória Solar!' : '🌑 Vitória do Vazio!';
+      if (winner === SENTE) {
+        title.innerHTML = '🏆 Vitória do Império Solar! 🏆';
+        title.style.color = '#fbbf24';
+      } else {
+        title.innerHTML = '👑 Vitória do Império das Sombras! 👑';
+        title.style.color = '#c4b5fd';
+      }
       desc.textContent = reason;
 
       document.getElementById('stats-turns').textContent = gameState.turnCount;
       const total = Object.values(gameState.reserves).reduce((sum, res) => {
         return sum + Object.values(res).reduce((a, b) => a + b, 0);
       }, 0);
-      document.getElementById('stats-captures').textContent = total;
+      document.getElementById('stats-captures').textContent = total + ' prisioneiros';
 
       modal.classList.add('show');
     }
@@ -1111,7 +1236,7 @@
     // EVENTOS
     document.getElementById('btn-undo').addEventListener('click', undoMove);
     document.getElementById('btn-restart').addEventListener('click', () => {
-      if (confirm('Reiniciar batalha?')) initGame();
+      if (confirm('Deseja realmente abandonar a batalha e recomeçar?')) initGame();
     });
 
     document.getElementById('btn-sound').addEventListener('click', function() {
