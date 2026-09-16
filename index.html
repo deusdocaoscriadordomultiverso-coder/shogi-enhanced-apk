@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SHOGI: Guerra dos Dois Impérios</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    :root {
+      --bg-dark: #0a0e14;
+      --bg-card: #131922;
+      --solar-gold: #f59e0b;
+      --solar-crimson: #dc2626;
+      --shadow-violet: #8b5cf6;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --board-wood: #2c2219;
+      --board-light: #3d3125;
+      --board-dark: #32271c;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 8px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+    }
+
+    .brand h1 {
+      font-size: 1rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, #fbbf24, #f87171);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand span {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    .army-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+
+    .army-badge.solar {
+      background: rgba(245,158,11,0.2);
+      color: #fcd34d;
+    }
+
+    .army-badge.shadow {
+      background: rgba(139,92,246,0.2);
+      color: #c4b5fd;
+    }
+
+    .game-message {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .game-message.alert {
+      color: #f87171;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    .garrison-container {
+      background: #111823;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 4px 8px;
+    }
+
+    .garrison-header {
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #64748b;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .garrison-slots {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      min-height: 44px;
+    }
+
+    .reserve-piece-card {
+      position: relative;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .reserve-piece-card:active {
+      transform: scale(0.95);
+    }
+
+    .reserve-piece-card.active {
+      border-color: #38bdf8;
+      box-shadow: 0 0 8px rgba(56,189,248,0.7);
+    }
+
+    .reserve-piece-card svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .count-pill {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #e11d48;
+      color: white;
+      font-size: 0.55rem;
+      font-weight: 900;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .arena-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+    }
+
+    .board-frame {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-width: 100%;
+      background: #1c140e;
+      border: 3px solid #4a3828;
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      grid-template-rows: repeat(9, 1fr);
+      gap: 1px;
+      padding: 2px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+    }
+
+    .tile {
+      background: #2b2016;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.08s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tile:nth-child(even) {
+      background: #261c14;
+    }
+
+    .tile.selected {
+      background: #0284c7 !important;
+      box-shadow: inset 0 0 8px #38bdf8;
+    }
+
+    .tile.valid-move::after {
+      content: "";
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #10b981;
+    }
+
+    .tile.valid-capture {
+      background: #7f1d1d !important;
+    }
+
+    .tile.in-check {
+      background: #b91c1c !important;
+      animation: checkPulse 0.6s infinite;
+    }
+
+    @keyframes checkPulse {
+      0%, 100% { box-shadow: inset 0 0 8px #ef4444; }
+      50% { box-shadow: inset 0 0 16px #ff0000; }
+    }
+
+    .shogi-piece {
+      width: 90%;
+      height: 90%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    }
+
+    .shogi-piece.player-gote {
+      transform: rotate(180deg);
+    }
+
+    .shogi-piece.promoted {
+      filter: drop-shadow(0 0 4px #f59e0b) drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    }
+
+    .shogi-piece svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #b45309, #d97706);
+      border-color: #f59e0b;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #991b1b, #dc2626);
+      border-color: #ef4444;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 12px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #111827;
+      border: 2px solid #374151;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.9);
+    }
+
+    .modal-header {
+      padding: 12px 16px;
+      background: #1f2937;
+      border-bottom: 1px solid #374151;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .modal-body {
+      padding: 14px 16px;
+      font-size: 0.82rem;
+      color: #d1d5db;
+    }
+
+    .modal-footer {
+      padding: 10px 16px;
+      background: #182234;
+      border-top: 1px solid #2d3b55;
+      display: flex;
+      gap: 8px;
+    }
+
+    .promo-preview {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 12px 0;
+    }
+
+    .promo-card {
+      background: #1f2937;
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      padding: 8px;
+      width: 90px;
+      text-align: center;
+      font-size: 0.7rem;
+    }
+
+    .promo-card.promoted {
+      border-color: #f59e0b;
+      box-shadow: 0 0 10px rgba(245,158,11,0.4);
+    }
+
+    .promo-card svg {
+      width: 45px;
+      height: 45px;
+      margin-bottom: 4px;
+    }
+
+    .history-drawer {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 6px 8px;
+      max-height: 50px;
+      overflow-y: auto;
+      font-size: 0.65rem;
+      color: #94a3b8;
+    }
+
+    .history-entry {
+      padding: 2px 0;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .history-entry.sente { color: #fcd34d; }
+    .history-entry.gote { color: #c4b5fd; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="brand">
+        <h1>⚔️ SHOGI ⚔️</h1>
+        <span>Guerra dos Dois Impérios</span>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-sound" title="Som">🔊</button>
+        <button class="icon-btn" id="btn-rules" title="Regras">ℹ️</button>
+        <button class="icon-btn" id="btn-settings" title="Configurações">⚙️</button>
+      </div>
+    </header>
+
+    <div class="status-bar">
+      <div class="army-badge solar" id="army-badge">
+        <span>⭐ Império Solar</span>
+      </div>
+      <div class="game-message" id="game-status">Turno 1</div>
+    </div>
+
+    <div class="garrison-container">
+      <div class="garrison-header shadow-header">Arsenal do Vazio (Inimigo)</div>
+      <div class="garrison-slots" id="gote-slots"></div>
+    </div>
+
+    <div class="arena-wrapper">
+      <div class="board-frame" id="shogi-board"></div>
+    </div>
+
+    <div class="garrison-container">
+      <div class="garrison-header">Arsenal da Alvorada (Seu Exército)</div>
+      <div class="garrison-slots" id="sente-slots"></div>
+    </div>
+
+    <div class="history-drawer" id="move-history">
+      Batalha iniciada...
+    </div>
+
+    <div class="action-bar">
+      <button class="btn" id="btn-undo">↶ Desfazer</button>
+      <button class="btn btn-danger" id="btn-restart">🔄 Reiniciar</button>
+    </div>
+  </div>
+
+  <!-- MODAIS -->
+  <div class="modal-backdrop" id="promo-modal">
+    <div class="modal-window">
+      <div class="modal-header">Evolução de Batalha</div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px;">Sua unidade atingiu o território inimigo!</p>
+        <div class="promo-preview">
+          <div class="promo-card" id="promo-normal"></div>
+          <div style="display: flex; align-items: center;">➜</div>
+          <div class="promo-card promoted" id="promo-evolved"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btn-promo-no" style="flex: 1;">Não</button>
+        <button class="btn btn-primary" id="btn-promo-yes" style="flex: 1;">Sim</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="victory-modal">
+    <div class="modal-window">
+      <div class="modal-body" style="text-align: center;">
+        <h2 id="victory-title" style="margin-bottom: 12px;">Vitória!</h2>
+        <p id="victory-desc" style="margin-bottom: 16px;"></p>
+        <div style="background: #1e293b; padding: 10px; border-radius: 6px; font-size: 0.75rem; margin-bottom: 16px;">
+          <div>Turnos: <strong id="stats-turns">0</strong></div>
+          <div>Capturas: <strong id="stats-captures">0</strong></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="btn-restart-victory" style="flex: 1;">Nova Partida</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="rules-modal">
+    <div class="modal-window">
+      <div class="modal-header">Regras do Shogi</div>
+      <div class="modal-body">
+        <h4 style="color: #f59e0b; margin: 8px 0;">Objetivo</h4>
+        <p>Capture o Rei inimigo em Xeque-Mate!</p>
+        <h4 style="color: #f59e0b; margin: 8px 0;">Peças Capturadas</h4>
+        <p>Peças capturadas viram suas e podem ser "invocadas" em casas vazias!</p>
+        <h4 style="color: #f59e0b; margin: 8px 0;">Promoção</h4>
+        <p>Ao entrar nas 3 fileiras inimigas, peças podem evoluir!</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="close-rules" style="flex: 1;">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+    
+    const SENTE = 0;
+    const GOTE = 1;
+
+    const PIECE_NAMES = {
+      K: '玉', R: '飛', B: '角', G: '金', S: '銀', N: '桂', L: '香', P: '歩'
+    };
+
+    let gameState = {
+      board: [],
+      turn: SENTE,
+      reserves: { 0: {}, 1: {} },
+      selected: null,
+      selectedDrop: null,
+      validMoves: [],
+      lastMove: null,
+      gameOver: false,
+      soundOn: true,
+      turnCount: 1,
+      pendingPromo: null
+    };
+
+    let undoStack = [];
+    let aiRunning = false;
+
+    // INICIALIZAÇÃO
+    function initGame() {
+      gameState.board = createBoard();
+      gameState.turn = SENTE;
+      gameState.reserves[SENTE] = {};
+      gameState.reserves[GOTE] = {};
+      gameState.selected = null;
+      gameState.selectedDrop = null;
+      gameState.validMoves = [];
+      gameState.lastMove = null;
+      gameState.gameOver = false;
+      gameState.turnCount = 1;
+      gameState.pendingPromo = null;
+      undoStack = [];
+
+      for (let pt of ['P', 'L', 'N', 'S', 'G', 'B', 'R']) {
+        gameState.reserves[SENTE][pt] = 0;
+        gameState.reserves[GOTE][pt] = 0;
+      }
+
+      updateUI();
+      logMove('Batalha iniciada!');
+    }
+
+    function createBoard() {
+      const b = Array(9).fill(null).map(() => Array(9).fill(null));
+      const backRank = ['L', 'N', 'S', 'G', 'K', 'G', 'S', 'N', 'L'];
+
+      for (let c = 0; c < 9; c++) {
+        b[0][c] = { type: backRank[c], player: GOTE };
+      }
+      b[1][1] = { type: 'R', player: GOTE };
+      b[1][7] = { type: 'B', player: GOTE };
+      for (let c = 0; c < 9; c++) {
+        b[2][c] = { type: 'P', player: GOTE };
+      }
+
+      for (let c = 0; c < 9; c++) {
+        b[6][c] = { type: 'P', player: SENTE };
+      }
+      b[7][1] = { type: 'B', player: SENTE };
+      b[7][7] = { type: 'R', player: SENTE };
+      for (let c = 0; c < 9; c++) {
+        b[8][c] = { type: backRank[c], player: SENTE };
+      }
+
+      return b;
+    }
+
+    function cloneBoard(b) {
+      return b.map(row => [...row]);
+    }
+
+    function findKing(board, player) {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (board[r][c]?.type === 'K' && board[r][c]?.player === player) {
+            return { r, c };
+          }
+        }
+      }
+      return null;
+    }
+
+    function isInCheck(board, player) {
+      const king = findKing(board, player);
+      if (!king) return false;
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const p = board[r][c];
+          if (p?.player !== (1 - player)) continue;
+
+          const moves = getPseudoMoves(board, r, c);
+          if (moves.some(m => m.r === king.r && m.c === king.c)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function getPseudoMoves(board, r, c) {
+      const piece = board[r][c];
+      if (!piece) return [];
+
+      const moves = [];
+      const fwd = piece.player === SENTE ? -1 : 1;
+
+      const tryStep = (dr, dc) => {
+        const nr = r + dr, nc = c + dc;
+        if (nr < 0 || nr > 8 || nc < 0 || nc > 8) return;
+        if (board[nr][nc]?.player === piece.player) return;
+        moves.push({ r: nr, c: nc });
+      };
+
+      const tryRay = (dr, dc) => {
+        for (let step = 1; step < 9; step++) {
+          const nr = r + dr * step, nc = c + dc * step;
+          if (nr < 0 || nr > 8 || nc < 0 || nc > 8) break;
+          if (!board[nr][nc]) {
+            moves.push({ r: nr, c: nc });
+          } else {
+            if (board[nr][nc].player !== piece.player) {
+              moves.push({ r: nr, c: nc });
+            }
+            break;
+          }
+        }
+      };
+
+      const type = piece.type;
+      switch (type) {
+        case 'K':
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              if (dr || dc) tryStep(dr, dc);
+            }
+          }
+          break;
+        case 'R':
+          tryRay(-1, 0); tryRay(1, 0); tryRay(0, -1); tryRay(0, 1);
+          break;
+        case 'B':
+          tryRay(-1, -1); tryRay(-1, 1); tryRay(1, -1); tryRay(1, 1);
+          break;
+        case 'G':
+        case '+S': case '+N': case '+L': case '+P':
+          tryStep(fwd, 0); tryStep(fwd, -1); tryStep(fwd, 1);
+          tryStep(0, -1); tryStep(0, 1); tryStep(-fwd, 0);
+          break;
+        case 'S':
+          tryStep(fwd, 0); tryStep(fwd, -1); tryStep(fwd, 1);
+          tryStep(-fwd, -1); tryStep(-fwd, 1);
+          break;
+        case 'N':
+          tryStep(fwd * 2, -1); tryStep(fwd * 2, 1);
+          break;
+        case 'L':
+          tryRay(fwd, 0);
+          break;
+        case 'P':
+          tryStep(fwd, 0);
+          break;
+      }
+      return moves;
+    }
+
+    function getLegalMoves(board, r, c) {
+      const piece = board[r][c];
+      if (!piece) return [];
+
+      const pseudo = getPseudoMoves(board, r, c);
+      return pseudo.filter(m => {
+        const test = cloneBoard(board);
+        test[m.r][m.c] = test[r][c];
+        test[r][c] = null;
+        return !isInCheck(test, piece.player);
+      });
+    }
+
+    function onTileClick(r, c) {
+      if (gameState.gameOver || gameState.turn === GOTE) return;
+
+      const piece = gameState.board[r][c];
+
+      if (gameState.selectedDrop) {
+        if (gameState.validMoves.some(m => m.r === r && m.c === c)) {
+          executeDrop(gameState.selectedDrop.type, r, c);
+          return;
+        }
+        gameState.selectedDrop = null;
+        gameState.validMoves = [];
+      }
+
+      if (gameState.selected) {
+        const from = gameState.selected;
+        if (from.r === r && from.c === c) {
+          gameState.selected = null;
+          gameState.validMoves = [];
+          updateUI();
+          return;
+        }
+
+        const move = gameState.validMoves.find(m => m.r === r && m.c === c);
+        if (move) {
+          if (move.promoOpt && piece?.type !== 'K' && piece?.type !== 'G') {
+            gameState.pendingPromo = { from, to: { r, c } };
+            showPromoModal(piece.type);
+          } else {
+            executeMove(from, { r, c }, false);
+          }
+          return;
+        }
+      }
+
+      if (piece?.player === gameState.turn) {
+        gameState.selected = { r, c };
+        gameState.validMoves = getLegalMoves(gameState.board, r, c);
+        gameState.validMoves.forEach(m => {
+          m.promoOpt = canPromote(piece.type, r, m.r);
+        });
+        updateUI();
+      }
+    }
+
+    function canPromote(type, fromR, toR) {
+      if (type.startsWith('+')) return false;
+      if (type === 'K' || type === 'G') return false;
+      const inZone = gameState.turn === SENTE ? (toR <= 2) : (toR >= 6);
+      return inZone;
+    }
+
+    function executeMove(from, to, promote) {
+      saveUndo();
+
+      const piece = gameState.board[from.r][from.c];
+      const target = gameState.board[to.r][to.c];
+
+      if (target) {
+        const raw = target.type.replace('+', '');
+        gameState.reserves[gameState.turn][raw] = (gameState.reserves[gameState.turn][raw] || 0) + 1;
+        playSound('capture');
+      } else {
+        playSound('move');
+      }
+
+      let finalType = piece.type;
+      if (promote) {
+        finalType = '+' + piece.type;
+        playSound('promo');
+      }
+
+      gameState.board[to.r][to.c] = { type: finalType, player: piece.player };
+      gameState.board[from.r][from.c] = null;
+
+      gameState.lastMove = { from, to, piece: finalType };
+      gameState.selected = null;
+      gameState.selectedDrop = null;
+      gameState.validMoves = [];
+      gameState.pendingPromo = null;
+
+      endTurn();
+    }
+
+    function executeDrop(type, r, c) {
+      saveUndo();
+
+      gameState.reserves[gameState.turn][type]--;
+      gameState.board[r][c] = { type, player: gameState.turn };
+
+      gameState.selected = null;
+      gameState.selectedDrop = null;
+      gameState.validMoves = [];
+      playSound('drop');
+
+      endTurn();
+    }
+
+    function endTurn() {
+      gameState.turn = 1 - gameState.turn;
+      if (gameState.turn === SENTE) gameState.turnCount++;
+
+      const inCheck = isInCheck(gameState.board, gameState.turn);
+      const hasMove = hasAnyMove(gameState.board, gameState.turn);
+
+      if (!hasMove) {
+        gameState.gameOver = true;
+        const winner = 1 - gameState.turn;
+        showVictory(winner, inCheck ? 'Xeque-Mate!' : 'Impasse!');
+      } else if (inCheck) {
+        playSound('check');
+      }
+
+      updateUI();
+
+      if (!gameState.gameOver && gameState.turn === GOTE) {
+        setTimeout(() => triggerAI(), 400);
+      }
+    }
+
+    function hasAnyMove(board, player) {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (board[r][c]?.player === player) {
+            if (getLegalMoves(board, r, c).length > 0) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function triggerAI() {
+      if (aiRunning || gameState.gameOver || gameState.turn !== GOTE) return;
+      aiRunning = true;
+
+      const moves = [];
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (gameState.board[r][c]?.player === GOTE) {
+            getLegalMoves(gameState.board, r, c).forEach(m => {
+              moves.push({ from: { r, c }, to: m });
+            });
+          }
+        }
+      }
+
+      if (moves.length > 0) {
+        const move = moves[Math.floor(Math.random() * Math.min(moves.length, 10))];
+        executeMove(move.from, move.to, false);
+      }
+
+      aiRunning = false;
+    }
+
+    function saveUndo() {
+      undoStack.push({
+        board: cloneBoard(gameState.board),
+        turn: gameState.turn,
+        reserves: JSON.parse(JSON.stringify(gameState.reserves)),
+        turnCount: gameState.turnCount
+      });
+      if (undoStack.length > 20) undoStack.shift();
+    }
+
+    function undoMove() {
+      if (undoStack.length === 0 || gameState.gameOver) return;
+      const state = undoStack.pop();
+      gameState.board = state.board;
+      gameState.turn = state.turn;
+      gameState.reserves = state.reserves;
+      gameState.turnCount = state.turnCount;
+      gameState.selected = null;
+      gameState.validMoves = [];
+      logMove('Movimento desfeito.');
+      updateUI();
+    }
+
+    function logMove(text) {
+      const log = document.getElementById('move-history');
+      log.textContent = text;
+    }
+
+    function updateUI() {
+      renderBoard();
+      renderReserves();
+      updateStatus();
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('shogi-board');
+      board.innerHTML = '';
+
+      const inCheck = isInCheck(gameState.board, gameState.turn);
+      const king = inCheck ? findKing(gameState.board, gameState.turn) : null;
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+
+          if (gameState.selected?.r === r && gameState.selected?.c === c) {
+            tile.classList.add('selected');
+          }
+
+          if (gameState.validMoves.some(m => m.r === r && m.c === c)) {
+            tile.classList.add('valid-move');
+          }
+
+          if (king?.r === r && king?.c === c) {
+            tile.classList.add('in-check');
+          }
+
+          const piece = gameState.board[r][c];
+          if (piece) {
+            const p = document.createElement('div');
+            p.className = 'shogi-piece';
+            if (piece.player === GOTE) p.classList.add('player-gote');
+            if (piece.type.startsWith('+')) p.classList.add('promoted');
+            p.innerHTML = renderPieceIcon(piece.type, piece.player);
+            tile.appendChild(p);
+          }
+
+          tile.addEventListener('click', () => onTileClick(r, c));
+          board.appendChild(tile);
+        }
+      }
+    }
+
+    function renderPieceIcon(type, player) {
+      const colors = player === SENTE 
+        ? { main: '#f59e0b', dark: '#78350f' }
+        : { main: '#a855f7', dark: '#3b0764' };
+
+      return `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,5 85,35 80,115 20,115 15,35" fill="${colors.main}" stroke="${colors.dark}" stroke-width="2"/>
+        <text x="50" y="90" font-size="35" font-weight="bold" text-anchor="middle" fill="${colors.dark}">${PIECE_NAMES[type.replace('+', '')]}</text>
+      </svg>`;
+    }
+
+    function renderReserves() {
+      const sente = document.getElementById('sente-slots');
+      const gote = document.getElementById('gote-slots');
+      sente.innerHTML = '';
+      gote.innerHTML = '';
+
+      ['R', 'B', 'G', 'S', 'N', 'L', 'P'].forEach(type => {
+        const sc = gameState.reserves[SENTE][type];
+        const gc = gameState.reserves[GOTE][type];
+
+        if (sc > 0) {
+          const card = createReserveCard(type, sc, SENTE);
+          sente.appendChild(card);
+        }
+        if (gc > 0) {
+          const card = createReserveCard(type, gc, GOTE);
+          gote.appendChild(card);
+        }
+      });
+    }
+
+    function createReserveCard(type, count, player) {
+      const card = document.createElement('div');
+      card.className = 'reserve-piece-card';
+      if (gameState.selectedDrop?.type === type && gameState.selectedDrop?.player === player) {
+        card.classList.add('active');
+      }
+
+      card.innerHTML = renderPieceIcon(type, player);
+      if (count > 1) {
+        const pill = document.createElement('div');
+        pill.className = 'count-pill';
+        pill.textContent = count;
+        card.appendChild(pill);
+      }
+
+      card.addEventListener('click', () => {
+        if (gameState.turn !== player) return;
+        if (gameState.selectedDrop?.type === type) {
+          gameState.selectedDrop = null;
+          gameState.validMoves = [];
+        } else {
+          gameState.selectedDrop = { type, player };
+          gameState.validMoves = [];
+          for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+              if (!gameState.board[r][c]) {
+                gameState.validMoves.push({ r, c });
+              }
+            }
+          }
+        }
+        updateUI();
+      });
+
+      return card;
+    }
+
+    function updateStatus() {
+      const badge = document.getElementById('army-badge');
+      const status = document.getElementById('game-status');
+
+      if (gameState.turn === SENTE) {
+        badge.className = 'army-badge solar';
+        badge.innerHTML = '<span>⭐ Império Solar</span>';
+      } else {
+        badge.className = 'army-badge shadow';
+        badge.innerHTML = '<span>🌙 Império das Sombras</span>';
+      }
+
+      const inCheck = isInCheck(gameState.board, gameState.turn);
+      if (inCheck) {
+        status.className = 'game-message alert';
+        status.textContent = '⚠️ XEQUE!';
+      } else {
+        status.className = 'game-message';
+        status.textContent = `Turno ${gameState.turnCount}`;
+      }
+    }
+
+    function playSound(type) {
+      if (!gameState.soundOn) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'move') {
+          osc.frequency.setValueAtTime(220, t);
+          osc.frequency.exponentialRampToValueAtTime(60, t + 0.1);
+          gain.gain.setValueAtTime(0.1, t);
+          gain.gain.exponentialRampToValueAtTime(0, t + 0.1);
+          osc.start(t);
+          osc.stop(t + 0.1);
+        } else if (type === 'capture') {
+          osc.frequency.setValueAtTime(440, t);
+          osc.frequency.exponentialRampToValueAtTime(100, t + 0.15);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0, t + 0.15);
+          osc.start(t);
+          osc.stop(t + 0.15);
+        } else if (type === 'promo' || type === 'check') {
+          osc.frequency.setValueAtTime(880, t);
+          gain.gain.setValueAtTime(0.15, t);
+          gain.gain.exponentialRampToValueAtTime(0, t + 0.2);
+          osc.start(t);
+          osc.stop(t + 0.2);
+        } else if (type === 'drop') {
+          osc.frequency.setValueAtTime(150, t);
+          gain.gain.setValueAtTime(0.1, t);
+          gain.gain.exponentialRampToValueAtTime(0, t + 0.12);
+          osc.start(t);
+          osc.stop(t + 0.12);
+        }
+      } catch (e) {}
+    }
+
+    function showPromoModal(type) {
+      const modal = document.getElementById('promo-modal');
+      const normal = document.getElementById('promo-normal');
+      const evolved = document.getElementById('promo-evolved');
+
+      normal.innerHTML = `${renderPieceIcon(type, gameState.turn)}<div>${PIECE_NAMES[type]}</div>`;
+      evolved.innerHTML = `${renderPieceIcon('+' + type, gameState.turn)}<div>+${PIECE_NAMES[type]}</div>`;
+
+      modal.classList.add('show');
+    }
+
+    function showVictory(winner, reason) {
+      const modal = document.getElementById('victory-modal');
+      const title = document.getElementById('victory-title');
+      const desc = document.getElementById('victory-desc');
+
+      title.textContent = winner === SENTE ? '🏆 Vitória Solar!' : '🌑 Vitória do Vazio!';
+      desc.textContent = reason;
+
+      document.getElementById('stats-turns').textContent = gameState.turnCount;
+      const total = Object.values(gameState.reserves).reduce((sum, res) => {
+        return sum + Object.values(res).reduce((a, b) => a + b, 0);
+      }, 0);
+      document.getElementById('stats-captures').textContent = total;
+
+      modal.classList.add('show');
+    }
+
+    // EVENTOS
+    document.getElementById('btn-undo').addEventListener('click', undoMove);
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      if (confirm('Reiniciar batalha?')) initGame();
+    });
+
+    document.getElementById('btn-sound').addEventListener('click', function() {
+      gameState.soundOn = !gameState.soundOn;
+      this.textContent = gameState.soundOn ? '🔊' : '🔇';
+    });
+
+    document.getElementById('btn-rules').addEventListener('click', () => {
+      document.getElementById('rules-modal').classList.add('show');
+    });
+
+    document.getElementById('close-rules').addEventListener('click', () => {
+      document.getElementById('rules-modal').classList.remove('show');
+    });
+
+    document.getElementById('btn-promo-yes').addEventListener('click', () => {
+      document.getElementById('promo-modal').classList.remove('show');
+      if (gameState.pendingPromo) {
+        const p = gameState.pendingPromo;
+        executeMove(p.from, p.to, true);
+      }
+    });
+
+    document.getElementById('btn-promo-no').addEventListener('click', () => {
+      document.getElementById('promo-modal').classList.remove('show');
+      if (gameState.pendingPromo) {
+        const p = gameState.pendingPromo;
+        executeMove(p.from, p.to, false);
+      }
+    });
+
+    document.getElementById('btn-restart-victory').addEventListener('click', () => {
+      document.getElementById('victory-modal').classList.remove('show');
+      initGame();
+    });
+
+    // INICIAR JOGO
+    window.addEventListener('load', () => {
+      initGame();
+      resizeBoard();
+    });
+
+    window.addEventListener('resize', resizeBoard);
+
+    function resizeBoard() {
+      const board = document.getElementById('shogi-board');
+      const parent = board.parentElement;
+      const size = Math.min(parent.clientWidth, parent.clientHeight) * 0.95;
+      board.style.width = size + 'px';
+      board.style.height = size + 'px';
+    }
+  </script>
+</body>
+</html>
